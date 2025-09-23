@@ -16,7 +16,8 @@ pandas>=2.1.0          # Data manipulation and analysis
 numpy>=1.24.0          # Numerical computing
 
 # Optional development dependencies
-python-dotenv>=1.0.0   # Load environment variables from .env file
+boto3>=1.26.0
+aiohttp>=3.8.0   # Load environment variables from .env file
 requests>=2.31.0       # HTTP library for simple requests
 
 # Note: Some dependencies may already be available in your environment

@@ -1,410 +1,168 @@
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/aws_automation/setup_aws.py
-Starting AWS Infrastructure Setup for LOG8415E Assignment
-============================================================
-AWS Infrastructure Manager initialized for region: us-east-1
-Skipping key pair creation (AWS Academy restriction)
-Instances will be launched without key pairs (no SSH access)
-Using Amazon Linux 2 AMI: ami-0c02fb55956c7d316 (AWS Academy standard)
-Using default VPC: vpc-03445e1d10490cf52
-Creating security group: LOG8415E-TP1-SG
-Security group created: sg-0acd5ba3537dc7df0
-Launching 4 t2.large instances for cluster1
-Cluster1 instances launched: ['i-0e79beb093ae8025e', 'i-06b8350b5f45784c2', 'i-00ddf704ed784153e', 'i-03e42c37913c38023']
-Launching 5 t2.micro instances for cluster2
-Cluster2 instances launched: ['i-05297451dcf7708b4', 'i-0c41577a11634d5ea', 'i-04eab2ac04a37e5cd', 'i-0d028b2e0fdf9b5cd', 'i-04c6d3d742da55c00']
-Waiting for 9 instances to be running...
-All instances are now running!
-Deployment information saved to: deployment_info.json
+(.venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/aws_automation/setup_aws.py
 
-================================================================================
-DEPLOYMENT COMPLETED SUCCESSFULLY!
-================================================================================
+> > Starting AWS Infrastructure Setup
+> > AWS setup initialized for LOG8415E-TP1
+> > Launching 4 t2.large instances for cluster1...
+> > Launching 4 t2.micro instances for cluster2...
+> > Launching 4 t2.micro instances for cluster2...
+> > com:8000
+> > Cluster1-2: http://ec2-54-167-3-53.compute-1.amazonaws.com:8000
+> > Cluster1-3: http://ec2-3-84-135-171.compute-1.amazonaws.com:8000
+> > Cluster1-4: http://ec2-34-229-163-18.compute-1.amazonaws.com:8000
+> > Cluster2-1: http://ec2-54-87-18-111.compute-1.amazonaws.com:8000
+> > Cluster2-2: http://ec2-3-91-7-194.compute-1.amazonaws.com:8000
+> > Cluster2-3: http://ec2-34-228-41-191.compute-1.amazonaws.com:8000
+> > Cluster2-4: http://ec2-54-91-116-67.compute-1.amazonaws.com:8000
 
-DEPLOYMENT SUMMARY:
-• Total Instances: 9
-• Cluster1 (t2.large): 4 instances
-• Cluster2 (t2.micro): 5 instances
-• Region: us-east-1
+Deployment completed successfully!
+(.venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/load_balancer/create_alb.py
+Starting ALB Setup
+ALB Manager initialized for LOG8415E-TP1
+Found Cluster1: 4 instances, Cluster2: 4 instances
+Created cluster1 target group: arn:aws:elasticloadbalancing:us-east-1:654654213826:targetgroup/LOG8415E-TP1-Cluster1-TG/2a6da61a9e6a516f
+Created cluster2 target group: arn:aws:elasticloadbalancing:us-east-1:654654213826:targetgroup/LOG8415E-TP1-Cluster2-TG/3df3bdfac25d4200
+Registered 4 cluster1 targets
+Registered 4 cluster2 targets
+Created ALB: LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com
+Created listener: arn:aws:elasticloadbalancing:us-east-1:654654213826:listener/app/LOG8415E-TP1-ALB/2307e16f7803ed1b/e4158a37f093be25
+Created rule for /cluster1 -> cluster1 target group
+Created rule for /cluster2 -> cluster2 target group
+Waiting for ALB to be active...
+ALB is active!
+ALB endpoints:
+Root: http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com
+Cluster1: http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com/cluster1
+Cluster2: http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com/cluster2
+ALB info saved to alb_info.json
 
-CLUSTER1 ENDPOINTS (4 instances):
+ALB setup completed successfully!
+Test endpoints:
+http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com/cluster1
+http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com/cluster2
+(.venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/benchmarking/run_benchmark.py
 
-1.  http://ec2-98-89-18-212.compute-1.amazonaws.com:8000
-    Instance ID: i-0e79beb093ae8025e
-    Public IP: 98.89.18.212
-2.  http://ec2-34-229-138-220.compute-1.amazonaws.com:8000
-    Instance ID: i-03e42c37913c38023
-    Public IP: 34.229.138.220
-3.  http://ec2-54-81-100-91.compute-1.amazonaws.com:8000
-    Instance ID: i-00ddf704ed784153e
-    Public IP: 54.81.100.91
-4.  http://ec2-50-19-40-223.compute-1.amazonaws.com:8000
-    Instance ID: i-06b8350b5f45784c2
-    Public IP: 50.19.40.223
-
-CLUSTER2 ENDPOINTS (5 instances):
-
-1.  http://ec2-34-229-156-148.compute-1.amazonaws.com:8000
-    Instance ID: i-0d028b2e0fdf9b5cd
-    Public IP: 34.229.156.148
-2.  http://ec2-3-85-126-17.compute-1.amazonaws.com:8000
-    Instance ID: i-04c6d3d742da55c00
-    Public IP: 3.85.126.17
-3.  http://ec2-54-198-238-242.compute-1.amazonaws.com:8000
-    Instance ID: i-0c41577a11634d5ea
-    Public IP: 54.198.238.242
-4.  http://ec2-54-147-11-18.compute-1.amazonaws.com:8000
-    Instance ID: i-05297451dcf7708b4
-    Public IP: 54.147.11.18
-5.  http://ec2-18-215-154-58.compute-1.amazonaws.com:8000
-    Instance ID: i-04eab2ac04a37e5cd
-    Public IP: 18.215.154.58
-
-================================================================================
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1>
-
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> Test-NetConnection ec2-98-89-18-212.compute-1.amazonaws.com -Port 8000
-
-ComputerName : ec2-98-89-18-212.compute-1.amazonaws.com
-RemoteAddress : 98.89.18.212
-RemotePort : 8000
-InterfaceAlias : Wi-Fi
-SourceAddress : 192.168.0.14
-TcpTestSucceeded : True
-
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> Invoke-RestMethod -Uri "http://ec2-98-89-18-212.compute-1.amazonaws.com:8000/"
-
-message instance_id cluster timestamp
-
----
-
-Instance i-0e79beb093ae8025e is responding now! i-0e79beb093ae8025e cluster1 2025-09-22T22:49:03.993829
-
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> Invoke-RestMethod -Uri "http://ec2-98-89-18-212.compute-1.amazonaws.com:8000/health"
-
-status instance_id
-
----
-
-healthy i-0e79beb093ae8025e
-
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1>
-
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/load_balancer/custom_lb.py
-Custom Load Balancer for LOG8415E Assignment
-============================================================
-Loaded 9 instances from deployment_info.json
-Starting Custom Load Balancer Demo
-==================================================
-Custom Load Balancer initialized with 9 instances
-Benchmarking 9 instances with 30 requests...
-Health check: 9/9 instances healthy
-Benchmark completed:
-• Total requests: 30
-• Successful: 30
-• Failed: 0
-• Total time: 0.31s
-• Throughput: 96.42 req/s
-
-================================================================================
-CUSTOM LOAD BALANCER PERFORMANCE SUMMARY
-================================================================================
-
-HEALTH STATUS:
-• Total instances: 9
-• Healthy instances: 9
-• Health ratio: 9/9
-
-INSTANCE PERFORMANCE:
-
-1.  http://ec2-50-19-40-223.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 30
-    Errors: 0
-    Avg Response Time: 49.97ms
-    Min/Max: 27.40ms / 133.13ms
-
-2.  http://ec2-98-89-18-212.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 138.63ms
-    Min/Max: 138.63ms / 138.63ms
-
-3.  http://ec2-34-229-156-148.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 172.66ms
-    Min/Max: 172.66ms / 172.66ms
-
-4.  http://ec2-34-229-138-220.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 175.94ms
-    Min/Max: 175.94ms / 175.94ms
-
-5.  http://ec2-54-81-100-91.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 176.40ms
-    Min/Max: 176.40ms / 176.40ms
-
-6.  http://ec2-54-198-238-242.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 180.25ms
-    Min/Max: 180.25ms / 180.25ms
-
-7.  http://ec2-54-147-11-18.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 180.58ms
-    Min/Max: 180.58ms / 180.58ms
-
-8.  http://ec2-3-85-126-17.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 181.10ms
-    Min/Max: 181.10ms / 181.10ms
-
-9.  http://ec2-18-215-154-58.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 0
-    Errors: 0
-    Avg Response Time: 181.10ms
-    Min/Max: 181.10ms / 181.10ms
-
-BEST PERFORMING INSTANCE:
-• http://ec2-50-19-40-223.compute-1.amazonaws.com:8000
-• Average Response Time: 49.97ms
-
-================================================================================
-
-Performance statistics saved to: custom_lb_stats.json
-
-CUSTOM LOAD BALANCER FEATURES DEMONSTRATED:
-Health monitoring of all instances
-Response time measurement and tracking
-Intelligent routing to fastest instance
-Error counting and handling
-Performance analytics and reporting
-
-This load balancer routes requests to the instance with
-the lowest average response time, ensuring optimal performance!
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1>
-
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/benchmarking/run_benchmark.py
-Starting Comprehensive Benchmark for LOG8415E Assignment
-======================================================================
+Starting Simplified Benchmark for LOG8415E Assignment
 Benchmark Runner initialized
-Loaded deployment_info.json
-Loaded alb_info.json
 
-# BENCHMARKING DIRECT INSTANCE ENDPOINTS
+# Starting Performance Benchmarks
 
-Direct Instance: http://ec2-34-229-156-148.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 103.74ms
-Throughput: 92.49 req/s
-Direct Instance: http://ec2-3-85-126-17.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 94.48ms
-Throughput: 101.28 req/s
-Direct Instance: http://ec2-54-198-238-242.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 97.49ms
-Throughput: 97.71 req/s
-Direct Instance: http://ec2-54-147-11-18.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 96.84ms
-Throughput: 98.41 req/s
-Direct Instance: http://ec2-18-215-154-58.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 103.63ms
-Throughput: 91.82 req/s
-Direct Instance: http://ec2-98-89-18-212.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 93.36ms
-Throughput: 101.74 req/s
-Direct Instance: http://ec2-34-229-138-220.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 82.74ms
-Throughput: 116.05 req/s
-Direct Instance: http://ec2-54-81-100-91.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 94.29ms
-Throughput: 100.80 req/s
-Direct Instance: http://ec2-50-19-40-223.compute-1.amazonaws.com:8000
-Sending 100 requests with 10 concurrent connections...
-Completed: 100/100 successful
-Avg response time: 85.53ms
-Throughput: 111.91 req/s
+Testing ALB Cluster1 (/cluster1):
+Benchmarking ALB Cluster1: http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com/cluster1  
+ Sending 1000 requests...
+Success rate: 100.0%
+Avg response time: 36.93ms
+Throughput: 267.36 req/s
 
-# BENCHMARKING APPLICATION LOAD BALANCER ENDPOINTS
+Testing ALB Cluster2 (/cluster2):
+Benchmarking ALB Cluster2: http://LOG8415E-TP1-ALB-943597734.us-east-1.elb.amazonaws.com/cluster2  
+ Sending 1000 requests...
+Success rate: 100.0%
+Avg response time: 35.11ms
+Throughput: 280.06 req/s
 
-ALB Root endpoint: http://LOG8415E-TP1-ALB-1019344157.us-east-1.elb.amazonaws.com
-Sending 1000 requests with 50 concurrent connections...
-Completed: 1000/1000 successful
-Avg response time: 118.68ms
-Throughput: 385.29 req/s
-ALB Cluster1 endpoint: http://LOG8415E-TP1-ALB-1019344157.us-east-1.elb.amazonaws.com/cluster1
-Sending 1000 requests with 50 concurrent connections...
-Completed: 1000/1000 successful
-Avg response time: 109.77ms
-Throughput: 424.06 req/s
-ALB Cluster2 endpoint: http://LOG8415E-TP1-ALB-1019344157.us-east-1.elb.amazonaws.com/cluster2
-Sending 1000 requests with 50 concurrent connections...
-Completed: 1000/1000 successful
-Avg response time: 95.42ms
-Throughput: 495.20 req/s
+Testing Direct Cluster1 Instances:
+Benchmarking Cluster1 Instance 1: http://ec2-3-87-90-123.compute-1.amazonaws.com:8000
+Sending 100 requests...
+Success rate: 100.0%
+Avg response time: 98.01ms
+Throughput: 97.92 req/s
+Benchmarking Cluster1 Instance 2: http://ec2-54-167-3-53.compute-1.amazonaws.com:8000
+Sending 100 requests...
+Success rate: 100.0%
+Avg response time: 108.96ms
+Throughput: 88.07 req/s
 
-# BENCHMARKING CUSTOM LOAD BALANCER
+Testing Direct Cluster2 Instances:
+Benchmarking Cluster2 Instance 1: http://ec2-54-87-18-111.compute-1.amazonaws.com:8000
+Sending 100 requests...
+Success rate: 100.0%
+Avg response time: 105.42ms
+Throughput: 90.78 req/s
+Benchmarking Cluster2 Instance 2: http://ec2-3-91-7-194.compute-1.amazonaws.com:8000
+Sending 100 requests...
+Success rate: 100.0%
+Avg response time: 121.13ms
+Throughput: 78.94 req/s
+Results saved to benchmark_results.json and benchmark_results.csv
 
-Custom Load Balancer initialized with 9 instances
-Testing custom load balancer with intelligent routing...
-Benchmarking 9 instances with 50 requests...
-Health check: 9/9 instances healthy
-Benchmark completed:
-• Total requests: 50
-• Successful: 50
-• Failed: 0
-• Total time: 0.51s
-• Throughput: 97.85 req/s
-Sending 500 requests through custom load balancer...
-Completed: 500/500 successful
-Avg response time: 170.36ms
-Throughput: 119.69 req/s
-
-================================================================================
-CUSTOM LOAD BALANCER PERFORMANCE SUMMARY
-================================================================================
-
-HEALTH STATUS:
-• Total instances: 9
-• Healthy instances: 9
-• Health ratio: 9/9
-
-INSTANCE PERFORMANCE:
-
-1.  http://ec2-34-229-138-220.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 18
-    Errors: 0
-    Avg Response Time: 90.65ms
-    Min/Max: 52.73ms / 162.06ms
-
-2.  http://ec2-54-81-100-91.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 55
-    Errors: 0
-    Avg Response Time: 166.01ms
-    Min/Max: 43.75ms / 357.54ms
-
-3.  http://ec2-18-215-154-58.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 68
-    Errors: 0
-    Avg Response Time: 171.53ms
-    Min/Max: 71.90ms / 364.48ms
-
-4.  http://ec2-34-229-156-148.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 52
-    Errors: 0
-    Avg Response Time: 179.11ms
-    Min/Max: 47.88ms / 339.63ms
-
-5.  http://ec2-98-89-18-212.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 73
-    Errors: 0
-    Avg Response Time: 179.21ms
-    Min/Max: 82.41ms / 286.36ms
-
-6.  http://ec2-54-147-11-18.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 61
-    Errors: 0
-    Avg Response Time: 189.93ms
-    Min/Max: 64.72ms / 358.33ms
-
-7.  http://ec2-3-85-126-17.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 63
-    Errors: 0
-    Avg Response Time: 190.69ms
-    Min/Max: 74.86ms / 378.18ms
-
-8.  http://ec2-50-19-40-223.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 86
-    Errors: 0
-    Avg Response Time: 203.12ms
-    Min/Max: 124.80ms / 355.37ms
-
-9.  http://ec2-54-198-238-242.compute-1.amazonaws.com:8000
-    Status: HEALTHY
-    Requests: 74
-    Errors: 0
-    Avg Response Time: 235.32ms
-    Min/Max: 123.77ms / 382.94ms
-
-BEST PERFORMING INSTANCE:
-• http://ec2-34-229-138-220.compute-1.amazonaws.com:8000
-• Average Response Time: 90.65ms
-
-================================================================================
-Detailed results saved to: benchmark_results.json
-CSV results saved to: benchmark_results.csv
-
-================================================================================
+============================================================
 BENCHMARK RESULTS SUMMARY
-================================================================================
+============================================================
 
-PERFORMANCE COMPARISON:
+CLUSTER PERFORMANCE COMPARISON:
+• ALB Cluster1 (t2.large) avg response: 36.93ms
+• ALB Cluster1 throughput: 267.36 req/s
+• ALB Cluster2 (t2.micro) avg response: 35.11ms
+• ALB Cluster2 throughput: 280.06 req/s
+• Direct Cluster1 avg response: 103.49ms
+• Direct Cluster2 avg response: 113.28ms
 
-1.  ALB Cluster2 endpoint
-    Avg Response Time: 95.42ms
-    Throughput: 495.20 req/s
-    Success Rate: 100.0%
+PERFORMANCE WINNER: Cluster2 (t2.micro) is faster
 
-2.  ALB Cluster1 endpoint
-    Avg Response Time: 109.77ms
-    Throughput: 424.06 req/s
-    Success Rate: 100.0%
+============================================================
 
-3.  ALB Root endpoint
-    Avg Response Time: 118.68ms
-    Throughput: 385.29 req/s
-    Success Rate: 100.0%
+Benchmarking completed successfully!
 
-4.  Custom Load Balancer
-    Avg Response Time: 170.36ms
-    Throughput: 119.69 req/s
-    Success Rate: 100.0%
+(.venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1> python src/monitoring/cloudwatch_metrics.py
+Starting CloudWatch Metrics Collection
+CloudWatch Monitor initialized for LOG8415E-TP1
+Found 8 instances to monitor
+Collecting CloudWatch metrics...
+Getting metrics for instance i-077630f9c3c8864b6
+Getting metrics for instance i-04aea465704fc49b5
+Getting metrics for instance i-0637d6c3bd3d86bbd
+Getting metrics for instance i-03f10b03c9ddac40b
+Getting metrics for instance i-0699881aac29b1386
+Getting metrics for instance i-004462457b5c4b495
+Getting metrics for instance i-028b9c6e352f7aa53
+Getting metrics for instance i-0158e6e1ce118191e
+CloudWatch metrics saved to cloudwatch_metrics.json
 
-BEST PERFORMING CONFIGURATION:
-• ALB Cluster2 endpoint
-• Average Response Time: 95.42ms
-• Throughput: 495.20 req/s
+============================================================
+CLOUDWATCH METRICS SUMMARY
+============================================================
 
-================================================================================
-Files generated:
-• benchmark_results.json (detailed results)
-• benchmark_results.csv (summary for spreadsheet)
-• custom_lb_stats.json (load balancer performance)
-================================================================================
-(venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1>
+OVERALL PERFORMANCE:
+• Total instances monitored: 5
+• Average CPU utilization: 3.64%
+• Total ALB requests: 0
+• Average response time: 0.000s
+
+INSTANCE DETAILS:
+i-077630f9c3c8864b6:
+CPU: 0.00%
+Network In: 360.0 bytes
+Network Out: 360.0 bytes
+i-04aea465704fc49b5:
+CPU: 4.85%
+Network In: 360.0 bytes
+Network Out: 360.0 bytes
+i-0637d6c3bd3d86bbd:
+CPU: 3.12%
+Network In: 360.0 bytes
+Network Out: 360.0 bytes
+i-03f10b03c9ddac40b:
+CPU: 4.45%
+Network In: 270.0 bytes
+Network Out: 360.0 bytes
+i-0699881aac29b1386:
+CPU: 0.00%
+Network In: 360.0 bytes
+Network Out: 360.0 bytes
+i-004462457b5c4b495:
+CPU: 2.80%
+Network In: 360.0 bytes
+Network Out: 360.0 bytes
+i-028b9c6e352f7aa53:
+CPU: 0.00%
+Network In: 782.0 bytes
+Network Out: 959.0 bytes
+i-0158e6e1ce118191e:
+CPU: 2.99%
+Network In: 360.0 bytes
+Network Out: 360.0 bytes
+
+============================================================
+
+CloudWatch monitoring completed!
+(.venv) PS C:\Users\hamza\Documents\ecole\log8415\log8415-tp1>

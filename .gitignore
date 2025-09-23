@@ -11,7 +11,7 @@ benchmark_results.csv
 deployment_info.json
 custom_lb_stats.json
 teardown_report.json
-
+cloudwatch_metrics.json
 # Python
 __pycache__/
 *.py[cod]

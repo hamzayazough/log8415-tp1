@@ -1,16 +1,16 @@
-# LOG8415E Cloud Computing Assignment - FastAPI Deployment on AWS EC2
+# LOG8415E Cloud Computing Assignment - Simplified FastAPI Deployment on AWS EC2
 
 ## 📋 Overview
 
-This project implements a complete cloud computing assignment that deploys FastAPI applications across multiple EC2 instances with load balancing and performance benchmarking.
+This project implements a simplified cloud computing assignment that deploys FastAPI applications across multiple EC2 instances with load balancing and performance monitoring using AWS CloudWatch.
 
 ### Assignment Components
 
-- **AWS Infrastructure**: 9 EC2 instances (4×t2.large + 5×t2.micro)
-- **Application Load Balancer (ALB)**: Path-based routing with target groups
-- **Custom Load Balancer**: Response-time based intelligent routing
+- **AWS Infrastructure**: 8 EC2 instances (t2.micro)
+- **Application Load Balancer (ALB)**: Basic HTTP routing
+- **CloudWatch Monitoring**: AWS native metrics collection
 - **FastAPI Applications**: Auto-deployed on all instances
-- **Performance Benchmarking**: Comprehensive testing with 1000+ requests
+- **Performance Benchmarking**: Essential testing functionality
 
 ## Quick Start Guide
 
@@ -37,25 +37,6 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### Step 2: Configure AWS Credentials
-
-Update your AWS credentials in `.env` file:
-
-```env
-AWS_ACCESS_KEY_ID=your_access_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_key_here
-AWS_SESSION_TOKEN=your_session_token_here
-AWS_DEFAULT_REGION=us-east-1
-```
-
-**Or configure via AWS CLI:**
-
-```bash
-aws configure set aws_access_key_id YOUR_ACCESS_KEY
-aws configure set aws_secret_access_key YOUR_SECRET_KEY
-aws configure set aws_session_token YOUR_SESSION_TOKEN
-```
-
 ### Step 3: Deploy Infrastructure
 
 ```bash
@@ -65,43 +46,47 @@ python src/aws_automation/setup_aws.py
 
 **Expected output:**
 
-- 4×t2.large instances (cluster1)
-- 4×t2.micro instances (cluster2)
-- Security group with proper firewall rules
+- 8×t2.micro instances
+- Security group with HTTP access on port 8000
 - FastAPI apps auto-installing on all instances
 
 ### Step 4: Create Application Load Balancer
 
 ```bash
-# Create ALB with path-based routing
+# Create ALB with basic routing
 python src/load_balancer/create_alb.py
 ```
 
 **Expected output:**
 
 - AWS Application Load Balancer
-- Two target groups (cluster1-tg, cluster2-tg)
-- Path routing: `/cluster1` → cluster1, `/cluster2` → cluster2
+- Target group with all instances
+- HTTP listener on port 80
 
 ### Step 5: Run Performance Benchmarks
 
 ```bash
-# Comprehensive benchmarking
+# Simplified benchmarking
 python src/benchmarking/run_benchmark.py
 ```
 
 **Tests performed:**
 
-- Direct instance endpoints (100 requests each)
-- ALB endpoints (1000 requests each)
-- Custom load balancer (500 requests)
+- ALB endpoint (1000 requests)
+- Direct instance endpoints (100 requests each, sample of 3)
 
-### Step 6: Test Custom Load Balancer
+### Step 6: Monitor with CloudWatch
 
 ```bash
-# Response-time based load balancing
-python src/load_balancer/custom_lb.py
+# Collect CloudWatch metrics
+python src/monitoring/cloudwatch_metrics.py
 ```
+
+**Metrics collected:**
+
+- EC2 CPU utilization
+- Network in/out
+- ALB request count and response times
 
 ### Step 7: Cleanup Resources
 
@@ -115,17 +100,97 @@ python src/aws_automation/teardown_aws.py
 ```
 ├── src/
 │   ├── aws_automation/
-│   │   ├── setup_aws.py          # Deploy EC2 infrastructure
+│   │   ├── setup_aws.py          # Deploy EC2 infrastructure (< 200 lines)
 │   │   └── teardown_aws.py       # Cleanup AWS resources
 │   ├── load_balancer/
-│   │   ├── create_alb.py         # AWS Application Load Balancer
-│   │   └── custom_lb.py          # Custom response-time LB
+│   │   └── create_alb.py         # Simple ALB setup (< 200 lines)
 │   ├── benchmarking/
-│   │   └── run_benchmark.py      # Performance testing
-│   └── fastapi/
-│       ├── main.py               # FastAPI application
-│       └── user_data.py          # EC2 startup script
+│   │   └── run_benchmark.py      # Basic performance testing (< 200 lines)
+│   └── monitoring/
+│       └── cloudwatch_metrics.py # CloudWatch metrics collection (< 200 lines)
 ├── requirements.txt              # Python dependencies
-├── .env                         # AWS credentials (create this)
 └── README.md                    # This file
 ```
+
+## 📊 Key Features
+
+### Simplified Architecture
+
+- **Minimal EC2 Deployment**: Essential instance setup only
+- **Basic ALB**: Standard load balancer without complex routing
+- **CloudWatch Integration**: Native AWS monitoring instead of custom solutions
+- **Streamlined Benchmarking**: Core performance testing functionality
+
+### CloudWatch Monitoring
+
+Instead of a custom load balancer, this implementation uses AWS CloudWatch to:
+
+- Monitor EC2 instance performance (CPU, network)
+- Track ALB metrics (request count, response times)
+- Analyze healthy host counts
+- Provide native AWS monitoring capabilities
+
+### File Size Optimization
+
+All core files are under 200 lines of code:
+
+- `setup_aws.py`: ~165 lines
+- `create_alb.py`: ~145 lines
+- `run_benchmark.py`: ~185 lines
+- `cloudwatch_metrics.py`: ~195 lines
+
+## 🚀 Usage Examples
+
+### Basic Testing Workflow
+
+```bash
+# 1. Deploy infrastructure
+python src/aws_automation/setup_aws.py
+
+# 2. Create load balancer
+python src/load_balancer/create_alb.py
+
+# 3. Run benchmarks
+python src/benchmarking/run_benchmark.py
+
+# 4. Monitor with CloudWatch
+python src/monitoring/cloudwatch_metrics.py
+
+# 5. Cleanup
+python src/aws_automation/teardown_aws.py
+```
+
+### Output Files
+
+- `deployment_info.json`: Instance details and endpoints
+- `alb_info.json`: Load balancer configuration
+- `benchmark_results.json`: Performance test results
+- `benchmark_results.csv`: Summary in CSV format
+- `cloudwatch_metrics.json`: AWS monitoring data
+
+## 📈 Monitoring and Analysis
+
+The CloudWatch monitoring script provides:
+
+- Real-time performance metrics
+- Instance-level CPU and network usage
+- ALB request patterns and response times
+- Automated analysis and reporting
+
+This approach leverages AWS native monitoring capabilities for production-ready observability.
+
+## 🔧 Requirements
+
+### Python Dependencies
+
+```
+boto3>=1.26.0
+aiohttp>=3.8.0
+```
+
+### AWS Permissions Required
+
+- EC2: Create/manage instances, security groups
+- ELB: Create/manage load balancers and target groups
+- CloudWatch: Read metrics data
+- VPC: Access default VPC and subnets
