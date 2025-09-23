@@ -1,4 +1,4 @@
-# LOG8415E Cloud Computing Assignment - Simplified FastAPI Deployment on AWS EC2
+# LOG8415E TP1
 
 ## Overview
 
