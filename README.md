@@ -37,7 +37,33 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### Step 3: Deploy Infrastructure
+### Step 2: Single-Command Deployment (Recommended)
+
+For complete automated deployment, use one of these single-command runners:
+
+**Windows PowerShell:**
+
+```powershell
+.\run_all.ps1
+```
+
+**Linux/Mac Bash:**
+
+```bash
+./run_all.sh
+```
+
+These scripts will automatically:
+
+1. Deploy 8 EC2 instances (4×t2.large + 4×t2.micro)
+2. Create ALB with cluster routing
+3. Run performance benchmarks
+4. Collect CloudWatch metrics
+5. Generate all result files
+
+**Skip to Step 7 if using single-command deployment.**
+
+### Step 3: Manual Deployment (Alternative)
 
 ```bash
 # Deploy 8 EC2 instances with FastAPI applications
@@ -46,7 +72,7 @@ python src/aws_automation/setup_aws.py
 
 **Expected output:**
 
-- 8×t2.micro instances
+- 4×t2.large + 4×t2.micro instances
 - Security group with HTTP access on port 8000
 - FastAPI apps auto-installing on all instances
 
