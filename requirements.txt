@@ -1,0 +1,23 @@
+# LOG8415E Assignment - Cloud Computing
+# FastAPI deployment and benchmarking on AWS EC2
+
+# Core dependencies
+boto3>=1.34.0          # AWS SDK for Python
+botocore>=1.34.0       # Core functionality for AWS SDK
+fastapi>=0.104.0       # Modern, fast web framework for building APIs
+uvicorn>=0.24.0        # ASGI web server implementation
+
+# HTTP client for benchmarking
+aiohttp>=3.9.0         # Async HTTP client/server framework
+asyncio-throttle>=1.0.2  # Rate limiting for async operations
+
+# Data processing and analysis
+pandas>=2.1.0          # Data manipulation and analysis
+numpy>=1.24.0          # Numerical computing
+
+# Optional development dependencies
+python-dotenv>=1.0.0   # Load environment variables from .env file
+requests>=2.31.0       # HTTP library for simple requests
+
+# Note: Some dependencies may already be available in your environment
+# Install with: pip install -r requirements.txt
