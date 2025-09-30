@@ -43,6 +43,12 @@ class AWSManager:
                     'FromPort': 8000,
                     'ToPort': 8000,
                     'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                },
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 80,
+                    'ToPort': 80,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
                 }]
             )
             
