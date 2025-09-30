@@ -131,10 +131,26 @@ class ALBManager:
             LoadBalancerArn=alb_arn,
             Protocol='HTTP',
             Port=80,
-            DefaultActions=[{
-                'Type': 'forward',
-                'TargetGroupArn': target_groups['cluster1']
-            }]
+            DefaultActions=[
+                {
+                    'Type': 'forward',
+                    'ForwardConfig': {
+                        'TargetGroups': [
+                            {
+                                'TargetGroupArn': target_groups['cluster1'],
+                                'Weight': 1
+                            },
+                            {
+                                'TargetGroupArn': target_groups['cluster2'],
+                                'Weight': 1
+                            }
+                        ],
+                        'TargetGroupStickinessConfig': {
+                            'Enabled': False
+                        }
+                    }
+                }
+]
         )
         
         listener_arn = response['Listeners'][0]['ListenerArn']
