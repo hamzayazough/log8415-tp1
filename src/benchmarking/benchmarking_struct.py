@@ -19,7 +19,7 @@ async def call_endpoint_http(session, request_num, url) :
 async def main() :
     with open('alb_info.json') as f:
         data = json.load(f)
-    url = f'{data['endpoints']['root']}'
+    url = data['endpoints']['root']
     
     num_requests = 1000
     start_time = time.time()
