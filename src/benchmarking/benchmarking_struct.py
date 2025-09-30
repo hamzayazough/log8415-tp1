@@ -3,8 +3,7 @@ import aiohttp
 import time
 import json
 
-async def call_endpoint_http(session, request_num, url) :  
-    print(f"Request{request_num}:Calling {url}")
+async def call_endpoint_http(session, request_num, url) :        
     
     headers = {'content-type':'application/json'}
     try:
@@ -20,7 +19,7 @@ async def call_endpoint_http(session, request_num, url) :
 async def main() :
     with open('alb_info.json') as f:
         data = json.load(f)
-    url = data['endpoints']['root']
+    url = data['endpoints']['cluster1']
     
     num_requests = 1000
     start_time = time.time()

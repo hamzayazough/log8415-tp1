@@ -27,6 +27,10 @@ Enter your AWS credentials when prompted:
 - Default region: `us-east-1`
 - Default output format: `json`
 
+```bash
+aws configure set aws_session_token <your token here>
+```
+
 ### Step 2: Run Complete Deployment
 
 **Windows:**
