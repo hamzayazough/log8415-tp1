@@ -19,7 +19,7 @@ async def call_endpoint_http(session, request_num, url) :
 async def main() :
     with open('alb_info.json') as f:
         data = json.load(f)
-    url = data['endpoints']['root']
+    url = f'{data['endpoints']['root']}'
     
     num_requests = 1000
     start_time = time.time()
@@ -30,7 +30,7 @@ async def main() :
 
     end_time = time.time()
     print( f"\nTotal time taken: {end_time - start_time:.2f} seconds")
-    print( f"Average time per request: {(end_time - start_time) / num_requests:.4 f} seconds")
+    print( f"Average time per request: {(end_time - start_time) / num_requests:.4f} seconds")
 
 if __name__== "__main__":    
     asyncio.run (main ())
