@@ -72,7 +72,7 @@ class AWSManager:
             MinCount=4,
             MaxCount=4,
             InstanceType='t2.large',
-            KeyName='testing',
+            KeyName='key',
             SecurityGroupIds=[security_group_id],
             UserData=self.get_user_data_script('cluster1'),
             TagSpecifications=[{
@@ -94,7 +94,7 @@ class AWSManager:
             MinCount=4,
             MaxCount=4,
             InstanceType='t2.micro',
-            KeyName='testing',
+            KeyName='key',
             SecurityGroupIds=[security_group_id],
             UserData=self.get_user_data_script('cluster2'),
             TagSpecifications=[{
