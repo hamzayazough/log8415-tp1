@@ -19,7 +19,7 @@ try {
     Start-Sleep -Seconds 60
 
     Write-Host "Step 4: Running benchmarks..." -ForegroundColor Yellow
-    python src/benchmarking/run_benchmark.py
+    python src/benchmarking/benchmarking_struct.py
     if ($LASTEXITCODE -ne 0) { throw "Benchmarking failed" }
 
     Write-Host "Step 5: Collecting metrics..." -ForegroundColor Yellow

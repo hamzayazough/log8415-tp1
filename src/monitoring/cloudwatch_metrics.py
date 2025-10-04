@@ -1,6 +1,6 @@
 import boto3
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 class CloudWatchMonitor:
     def __init__(self):
@@ -38,8 +38,18 @@ class CloudWatchMonitor:
             print("ALB not found")
             return None
 
+    def convert_datapoints(self, datapoints):
+        """Convert datetime objects in datapoints to ISO format strings"""
+        converted = []
+        for dp in datapoints:
+            dp_copy = dp.copy()
+            if 'Timestamp' in dp_copy:
+                dp_copy['Timestamp'] = dp_copy['Timestamp'].isoformat()
+            converted.append(dp_copy)
+        return converted
+
     def get_ec2_metrics(self, instance_ids, period_minutes=5):
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(minutes=period_minutes)
         
         metrics_data = {}
@@ -77,9 +87,9 @@ class CloudWatchMonitor:
             )
             
             metrics_data[instance_id] = {
-                'cpu_utilization': cpu_response['Datapoints'],
-                'network_in': network_in['Datapoints'],
-                'network_out': network_out['Datapoints']
+                'cpu_utilization': self.convert_datapoints(cpu_response['Datapoints']),
+                'network_in': self.convert_datapoints(network_in['Datapoints']),
+                'network_out': self.convert_datapoints(network_out['Datapoints'])
             }
         
         return metrics_data
@@ -88,7 +98,7 @@ class CloudWatchMonitor:
         if not alb_name:
             return {}
         
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(minutes=period_minutes)
         
         request_count = self.cloudwatch.get_metric_statistics(
@@ -122,14 +132,14 @@ class CloudWatchMonitor:
         )
         
         return {
-            'request_count': request_count['Datapoints'],
-            'response_time': response_time['Datapoints'],
-            'healthy_hosts': healthy_hosts['Datapoints']
+            'request_count': self.convert_datapoints(request_count['Datapoints']),
+            'response_time': self.convert_datapoints(response_time['Datapoints']),
+            'healthy_hosts': self.convert_datapoints(healthy_hosts['Datapoints'])
         }
 
     def analyze_metrics(self, ec2_metrics, alb_metrics):
         analysis = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'summary': {},
             'instances': {},
             'alb': alb_metrics

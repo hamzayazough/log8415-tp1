@@ -2,13 +2,8 @@ boto3>=1.34.0
 botocore>=1.34.0
 fastapi>=0.104.0 
 uvicorn>=0.24.0
-
 aiohttp>=3.9.0
 asyncio-throttle>=1.0.2
-
 pandas>=2.1.0 
 numpy>=1.24.0
-
-boto3>=1.26.0
-aiohttp>=3.8.0
 requests>=2.31.0

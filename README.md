@@ -6,11 +6,11 @@ This project implements a simplified cloud computing assignment that deploys Fas
 
 ### Assignment Components
 
-- **AWS Infrastructure**: 8 EC2 instances (4×t2.large + 4×t2.micro)
-- **Application Load Balancer (ALB)**: Path-based routing (/cluster1, /cluster2)
-- **CloudWatch Monitoring**: AWS native metrics collection
-- **FastAPI Applications**: Auto-deployed on all instances
-- **Performance Benchmarking**: Comprehensive testing functionality
+-   **AWS Infrastructure**: 8 EC2 instances (4×t2.large + 4×t2.micro)
+-   **Application Load Balancer (ALB)**: Path-based routing (/cluster1, /cluster2)
+-   **CloudWatch Monitoring**: AWS native metrics collection
+-   **FastAPI Applications**: Auto-deployed on all instances
+-   **Performance Benchmarking**: Comprehensive testing functionality
 
 ## Quick Start
 
@@ -22,10 +22,14 @@ aws configure
 
 Enter your AWS credentials when prompted:
 
-- AWS Access Key ID
-- AWS Secret Access Key
-- Default region: `us-east-1`
-- Default output format: `json`
+-   AWS Access Key ID
+-   AWS Secret Access Key
+-   Default region: `us-east-1`
+-   Default output format: `json`
+
+```bash
+aws configure set aws_session_token <your token here>
+```
 
 ### Step 2: Run Complete Deployment
 
@@ -51,28 +55,27 @@ The script will automatically:
 
 ## What Gets Deployed
 
-- **Cluster1**: 4×t2.large instances accessible via `/cluster1`
-- **Cluster2**: 4×t2.micro instances accessible via `/cluster2`
-- **Load Balancer**: AWS ALB with path-based routing
-- **Security Group**: HTTP access on port 8000
-- **FastAPI Apps**: Auto-deployed with cluster identification
+-   **Cluster1**: 4×t2.large instances accessible via `/cluster1`
+-   **Cluster2**: 4×t2.micro instances accessible via `/cluster2`
+-   **Load Balancer**: AWS ALB with path-based routing
+-   **Security Group**: HTTP access on port 8000
+-   **FastAPI Apps**: Auto-deployed with cluster identification
 
 ## Generated Files
 
 After completion, you'll have:
 
-- `deployment_info.json` - Instance details and endpoints
-- `alb_info.json` - Load balancer configuration
-- `benchmark_results.csv` - Performance test results
-- `cloudwatch_metrics.json` - AWS monitoring data
+-   `deployment_info.json` - Instance details and endpoints
+-   `alb_info.json` - Load balancer configuration
+-   `benchmark_results.csv` - Performance test results
+-   `cloudwatch_metrics.json` - AWS monitoring data
 
 ## Cleanup
 
 When finished testing:
 
-```bash
-python src/aws_automation/teardown_aws.py
-```
+1. Activate: `.venv\Scripts\Activate.ps1` (Windows) or `source .venv/bin/activate` (Linux/Mac)
+2. Run: `python src/aws_automation/teardown_aws.py`
 
 ## Manual Setup
 
@@ -82,7 +85,7 @@ If you prefer manual steps:
 2. Activate: `.venv\Scripts\Activate.ps1` (Windows) or `source .venv/bin/activate` (Linux/Mac)
 3. Install dependencies: `pip install -r requirements.txt`
 4. Run individual scripts in order:
-   - `python src/aws_automation/setup_aws.py`
-   - `python src/load_balancer/create_alb.py`
-   - `python src/benchmarking/run_benchmark.py`
-   - `python src/monitoring/cloudwatch_metrics.py`
+    - `python src/aws_automation/setup_aws.py`
+    - `python src/load_balancer/create_alb.py`
+    - `python src/benchmarking/run_benchmark.py`
+    - `python src/monitoring/cloudwatch_metrics.py`

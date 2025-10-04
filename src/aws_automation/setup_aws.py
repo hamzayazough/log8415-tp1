@@ -43,6 +43,12 @@ class AWSManager:
                     'FromPort': 8000,
                     'ToPort': 8000,
                     'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                },
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 80,
+                    'ToPort': 80,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
                 }]
             )
             
@@ -66,6 +72,7 @@ class AWSManager:
             MinCount=4,
             MaxCount=4,
             InstanceType='t2.large',
+            KeyName='key',
             SecurityGroupIds=[security_group_id],
             UserData=self.get_user_data_script('cluster1'),
             TagSpecifications=[{
@@ -87,6 +94,7 @@ class AWSManager:
             MinCount=4,
             MaxCount=4,
             InstanceType='t2.micro',
+            KeyName='key',
             SecurityGroupIds=[security_group_id],
             UserData=self.get_user_data_script('cluster2'),
             TagSpecifications=[{
