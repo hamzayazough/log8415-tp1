@@ -169,9 +169,7 @@ class CloudWatchMonitor:
         analysis['summary'] = {
             'total_instances': instance_count,
             'avg_cpu_across_instances': total_cpu / instance_count if instance_count > 0 else 0,
-            'total_requests': sum([dp['Sum'] for dp in alb_metrics.get('request_count', [])]),
-            'avg_response_time': sum([dp['Average'] for dp in alb_metrics.get('response_time', [])]) / len(alb_metrics.get('response_time', [])) if alb_metrics.get('response_time') else 0
-        }
+            }
         
         return analysis
 
@@ -190,8 +188,6 @@ class CloudWatchMonitor:
         print(f"\nOVERALL PERFORMANCE:")
         print(f"  • Total instances monitored: {summary['total_instances']}")
         print(f"  • Average CPU utilization: {summary['avg_cpu_across_instances']:.2f}%")
-        print(f"  • Total ALB requests: {summary['total_requests']}")
-        print(f"  • Average response time: {summary['avg_response_time']:.3f}s")
         
         print(f"\nINSTANCE DETAILS:")
         for instance_id, metrics in analysis['instances'].items():
