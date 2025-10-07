@@ -31,6 +31,8 @@ Enter your AWS credentials when prompted:
 aws configure set aws_session_token <your token here>
 ```
 
+important note: you MUST have a key-pair setup with the key name being "key". The key.pem file MUST be in the same file as this script.
+
 ### Step 2: Run Complete Deployment
 
 **Windows:**
