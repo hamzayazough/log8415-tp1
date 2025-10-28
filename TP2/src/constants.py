@@ -48,17 +48,30 @@ done
 RESULT_FILE=$RESULT_DIR/timings.csv
 echo "dataset,framework,run,time_seconds" > $RESULT_FILE
 
+run_linux_wc() {
+    local file=$1
+    local dataset_name=$(basename "$file")
+
+    for run in {1..3}; do
+        START=$(date +%s.%N)
+        cat "$file" | tr ' ' '\n' | sort | uniq -c > /dev/null
+        END=$(date +%s.%N)
+        ELAPSED=$(echo "$END - $START" | bc)
+        printf "%s,Linux,%d,%.4f\n" "$dataset_name" "$run" "$ELAPSED" >> "$RESULT_FILE"
+    done
+}
+
 run_hadoop_wc() {
     local file=$1
     local dataset_name=$(basename $file)
     for run in {1..3}; do
-        START=$(date +%s)
+        START=$(date +%s.%N)
         $HADOOP_HOME/bin/hadoop jar \
             $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-$HADOOP_VERSION.jar \
             wordcount file://$file file:///tmp/output >/dev/null 2>&1
-        END=$(date +%s)
-        ELAPSED=$((END-START))
-        echo "$dataset_name,Hadoop,$run,$ELAPSED" >> $RESULT_FILE
+        END=$(date +%s.%N)
+        ELAPSED=$(echo "$END - $START" | bc)
+        printf "%s,Hadoop,%d,%.4f\n" "$dataset_name" "$run" "$ELAPSED" >> "$RESULT_FILE"
         rm -rf /tmp/output
     done
 }
@@ -67,17 +80,18 @@ run_spark_wc() {
     local file=$1
     local dataset_name=$(basename "$file")
     for run in {1..3}; do
-        START=$(date +%s)
+        START=$(date +%s.%N)
         $SPARK_HOME/bin/spark-submit --master local[*] \
             $SPARK_HOME/examples/src/main/python/wordcount.py "$file" >/dev/null 2>&1
-        END=$(date +%s)
-        ELAPSED=$((END - START))
-        echo "$dataset_name,Spark,$run,$ELAPSED" >> "$RESULT_FILE"
+        END=$(date +%s.%N)
+        ELAPSED=$(echo "$END - $START" | bc)
+        printf "%s,Spark,%d,%.4f\n" "$dataset_name" "$run" "$ELAPSED" >> "$RESULT_FILE"
     done
 }
 
 for file in $DATA_DIR/*; do
     run_hadoop_wc $file
+    run_linux_wc $file
     run_spark_wc $file
 done
 
@@ -88,18 +102,33 @@ import matplotlib.pyplot as plt
 df = pd.read_csv("$RESULT_FILE")
 
 avg_df = df.groupby(['dataset','framework']).time_seconds.mean().reset_index()
-avg_df_pivot = avg_df.pivot(index='dataset', columns='framework', values='time_seconds')
+
+subset1 = avg_df[avg_df['framework'].isin(['Hadoop', 'Linux'])]
+pivot1 = subset1.pivot(index='dataset', columns='framework', values='time_seconds')
 
 fig, ax = plt.subplots(figsize=(12,6))
-avg_df_pivot.plot(kind='bar', ax=ax)
+pivot1.plot(kind='bar', ax=ax)
+ax.set_ylabel("Average Execution Time (s)")
+ax.set_title("Hadoop vs Linux WordCount")
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.savefig("$RESULT_DIR/comparison_hadoop_linux.png")
+plt.close(fig)
+
+subset2 = avg_df[avg_df['framework'].isin(['Hadoop', 'Spark'])]
+pivot2 = subset2.pivot(index='dataset', columns='framework', values='time_seconds')
+
+fig, ax = plt.subplots(figsize=(12,6))
+pivot2.plot(kind='bar', ax=ax)
 ax.set_ylabel("Average Execution Time (s)")
 ax.set_title("Hadoop vs Spark WordCount")
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
-plt.savefig("$RESULT_DIR/comparison_plot.png")
+plt.savefig("$RESULT_DIR/comparison_hadoop_spark.png")
+plt.close(fig)
 EOF
 
-echo "All experiments completed. Results saved in $RESULT_FILE and comparison_plot.png"
+echo "All experiments completed. Results saved in $RESULT_FILE, comparison_hadoop_linux.png, and comparison_hadoop_spark.png."
 '''
 
 USER_DATA_SCRIPT = '''#!/bin/bash
