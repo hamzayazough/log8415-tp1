@@ -56,38 +56,40 @@ def reducer(grouped, N=10):
     return results
 
 def main():
-    try:
-        import re
-        
+    try:       
         data = {}
-        
-        with open('friendList.txt', 'r') as f:
-            for raw in f:
-                line = raw.strip()
+
+        with open("friendList.txt", "r") as f:
+            for line in f:
+                line = line.strip()
                 
-                line = re.sub(r"\s+", '', line)
+                if not line:
+                    continue
                 
-                parts = line.split("\t")
+                parts = line.split()
+                
+                if len(parts) == 1:
+                    user = parts[0]
+                    data[user] = []
+                    continue
+                
                 if len(parts) != 2:
                     print("BAD LINE:", repr(line))
                     continue
 
-                user, friends_str = line.split('\t')
-                    
-                friends = friends_str.split(',')
-                
+                user, friends_str = parts
+                friends_list = friends_str.split(",")
 
-                
-                data[user] = friends
+                data[user] = friends_list
+           
         
-        #print(data)     
-        """
         mapped = mapper(data)
         grouped = shuffle(mapped)
         recommendations = reducer(grouped, N=10)
         
-        print(recommendations)
-        """  
+        # Example output for user "0"
+        print(recommendations["0"])
+        
     except Exception as e:
         print(f"Error: {e}")
         raise
