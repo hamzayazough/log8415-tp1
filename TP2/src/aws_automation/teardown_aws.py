@@ -2,12 +2,14 @@ import boto3
 import time
 import os
 
+from constants.constants import PROJECT_NAME
+
 class AWSTeardown:
-    def __init__(self):
+    def __init__(self, project_name):
         """Initialize AWS clients"""
         self.ec2_client = boto3.client('ec2')
         self.elbv2_client = boto3.client('elbv2')
-        self.project_name = 'LOG8415E-TP1'
+        self.project_name = project_name
         print(f"AWS Teardown initialized for {self.project_name}")
 
     def find_project_instances(self):
@@ -120,7 +122,7 @@ def main():
         print("Starting AWS Infrastructure Teardown")
         print("=" * 50)
         
-        teardown = AWSTeardown()
+        teardown = AWSTeardown(PROJECT_NAME)
         
         instance_ids = teardown.find_project_instances()
         teardown.terminate_instances(instance_ids)

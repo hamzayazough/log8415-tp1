@@ -6,12 +6,12 @@ from datetime import datetime
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from constants import USER_DATA_SCRIPT, PROJECT_NAME, DEFAULT_AMI_ID, CLUSTER_CONFIGS
+from constants.constants import USER_DATA_SCRIPT, PROJECT_NAME, DEFAULT_AMI_ID
 
 class AWSManager:
-    def __init__(self):
+    def __init__(self, project_name):
         self.ec2_client = boto3.client('ec2')
-        self.project_name = PROJECT_NAME
+        self.project_name = project_name
         print(f"AWS setup initialized for {self.project_name}")
 
     def get_default_vpc(self):
@@ -20,7 +20,7 @@ class AWSManager:
         )
         return vpcs['Vpcs'][0]['VpcId']
 
-    def create_security_group(self):
+    def create_security_group(self, canSSH=False):
         try:
             groups = self.ec2_client.describe_security_groups(
                 Filters=[{'Name': 'group-name', 'Values': [f'{self.project_name}-SG']}]
@@ -36,20 +36,32 @@ class AWSManager:
             
             sg_id = response['GroupId']
             
-            self.ec2_client.authorize_security_group_ingress(
-                GroupId=sg_id,
-                IpPermissions=[{
-                    'IpProtocol': 'tcp',
-                    'FromPort': 8000,
-                    'ToPort': 8000,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                },
+            ip_permissions = [
                 {
                     'IpProtocol': 'tcp',
                     'FromPort': 80,
                     'ToPort': 80,
                     'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                }]
+                },
+                {
+                    'IpProtocol': 'tcp',
+                    'FromPort': 8000,
+                    'ToPort': 8000,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                }
+            ]
+
+            if canSSH:
+                ip_permissions.append({
+                    'IpProtocol': 'tcp',
+                    'FromPort': 22,
+                    'ToPort': 22,
+                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+                })
+            
+            self.ec2_client.authorize_security_group_ingress(
+                GroupId=sg_id,
+                IpPermissions=ip_permissions
             )
             
             print(f"Created security group: {sg_id}")
@@ -62,6 +74,30 @@ class AWSManager:
     def get_user_data_script(self, cluster_name):
         """Generate cluster-specific user data script"""
         return USER_DATA_SCRIPT.format(cluster_name=cluster_name)
+    
+    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, keyName='key'):
+        print("Launching a t2.large instance")
+        response = self.ec2_client.run_instances(
+            ImageId=ami_id,
+            MinCount=1,
+            MaxCount=1,
+            InstanceType='t2.large',
+            KeyName=keyName,
+            SecurityGroupIds=[security_group_id],
+            UserData=user_data,
+            TagSpecifications=[{
+                'ResourceType': 'instance',
+                'Tags': [
+                    {'Key': 'Name', 'Value': f'{instance_name}'},
+                    {'Key': 'Project', 'Value': self.project_name},
+                ]
+            }]
+        )
+        
+        instance_id = response['Instances'][0]['InstanceId']
+
+        print(f"Launched instance: {instance_id}")
+        return instance_id
 
     def launch_instances(self, ami_id, security_group_id):
         all_instances = []
@@ -185,7 +221,7 @@ def main():
     try:
         print("Starting AWS Infrastructure Setup")
         
-        manager = AWSManager()
+        manager = AWSManager(PROJECT_NAME)
         
         security_group_id = manager.create_security_group()
         instance_ids = manager.launch_instances(DEFAULT_AMI_ID, security_group_id)

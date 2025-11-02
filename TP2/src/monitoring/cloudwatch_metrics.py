@@ -2,12 +2,14 @@ import boto3
 import json
 from datetime import datetime, timedelta, timezone
 
+from constants.constants import PROJECT_NAME
+
 class CloudWatchMonitor:
     def __init__(self):
         self.cloudwatch = boto3.client('cloudwatch')
         self.ec2_client = boto3.client('ec2')
         self.elbv2_client = boto3.client('elbv2')
-        self.project_name = 'LOG8415E-TP1'
+        self.project_name = PROJECT_NAME
         print(f"CloudWatch Monitor initialized for {self.project_name}")
 
     def get_project_instances(self):
