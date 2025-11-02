@@ -1,16 +1,15 @@
 from collections import defaultdict
 
 def mapper(data):
-    """Simulates the Map step."""
     mapped = []
 
     for user, friends in data.items():
-        # Emit direct friendships
+        #direct friends generation
         for f in friends:
             mapped.append((user, ("DIRECT", f)))
             mapped.append((f, ("DIRECT", user)))
 
-        # Emit friends-of-friends (candidate recommendations)
+        #friends-of-friends generation
         for f in friends:
             fof_list = [x for x in friends if x != f]
             if fof_list:
@@ -20,15 +19,14 @@ def mapper(data):
 
 
 def shuffle(mapped):
-    """Simulates the shuffle & sort step."""
     grouped = defaultdict(list)
     for key, value in mapped:
         grouped[key].append(value)
+
     return grouped
 
 
 def reducer(grouped, N=10):
-    """Simulates the Reduce step."""
     results = {}
 
     for user, values in grouped.items():
@@ -49,9 +47,9 @@ def reducer(grouped, N=10):
                     mutual_counts[candidate] += 1
 
         # Take top N recommendations
-        topN = sorted(mutual_counts.items(), key=lambda x: -x[1])[:N]
+        topN = sorted(mutual_counts.items(), key=lambda x: (-x[1], int(x[0])))[:N]
 
-        results[user] = topN
+        results[user] = [uid for uid, _ in topN]
 
     return results
 
@@ -64,6 +62,7 @@ def main():
                 line = line.strip()
                 
                 if not line:
+                    print("Line Data Error:", repr(line))
                     continue
                 
                 parts = line.split()
@@ -74,7 +73,7 @@ def main():
                     continue
                 
                 if len(parts) != 2:
-                    print("BAD LINE:", repr(line))
+                    print("Spliting Data Error:", repr(line))
                     continue
 
                 user, friends_str = parts
@@ -87,8 +86,11 @@ def main():
         grouped = shuffle(mapped)
         recommendations = reducer(grouped, N=10)
         
-        # Example output for user "0"
-        print(recommendations["0"])
+        with open("recommendations.txt", "w") as f:
+            for user, recs in recommendations.items():
+                recs_str = ",".join([f"{friend}" for friend in recs])
+                f.write(f"{user}\t{recs_str}\n")
+
         
     except Exception as e:
         print(f"Error: {e}")
