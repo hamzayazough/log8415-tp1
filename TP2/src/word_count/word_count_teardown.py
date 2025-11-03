@@ -1,9 +1,9 @@
+import time
 import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-import time
 from aws_automation import teardown_aws
 from constants.word_count_constants import WORD_COUNT_PROJECT_NAME
 

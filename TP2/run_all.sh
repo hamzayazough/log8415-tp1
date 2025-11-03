@@ -14,20 +14,10 @@ if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 fi
 
-echo "Step 1: Deploying infrastructure"
-python src/aws_automation/setup_aws.py
+echo "Deploying Word Count Test Infrastructure"
+python src/word_count/word_count_setup.py
 
-echo "Step 2: Creating load balancer"
-python src/load_balancer/create_alb.py
-
-echo "Step 3: Waiting for apps to start"
-sleep 60
-
-echo "Step 4: Running benchmarks"
-python src/benchmarking/run_benchmark.py
-
-echo "Step 5: Collecting metrics"
-python src/monitoring/cloudwatch_metrics.py
-
-echo "Deployment complete! Check generated JSON/CSV files."
-echo "Cleanup: python src/aws_automation/teardown_aws.py"
+echo "Deployment complete!"
+echo "To check the progress of the tests, ssh into the instance and use the following command: cat ../../var/log/cloud-init-output.log"
+echo "To check the performance results, wait until tests are done and check for comparison_hadoop_linux.png, comparison_hadoop_spark.png and timings.csv in /home/ubuntu/results/"
+echo "Cleanup: python src/word_count/word_count_teardown.py"

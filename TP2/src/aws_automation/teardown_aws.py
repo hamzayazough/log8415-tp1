@@ -1,8 +1,4 @@
 import boto3
-import time
-import os
-
-from constants.constants import PROJECT_NAME
 
 class AWSTeardown:
     def __init__(self, project_name):
@@ -43,48 +39,6 @@ class AWSTeardown:
         waiter.wait(InstanceIds=instance_ids)
         print("All instances terminated")
 
-    def delete_load_balancer(self):
-        """Delete ALB and target groups"""
-        try:
-            albs = self.elbv2_client.describe_load_balancers(
-                Names=[f'{self.project_name}-ALB']
-            )
-            
-            if albs['LoadBalancers']:
-                alb_arn = albs['LoadBalancers'][0]['LoadBalancerArn']
-                print(f"Deleting ALB: {alb_arn}")
-                
-                self.elbv2_client.delete_load_balancer(LoadBalancerArn=alb_arn)
-                
-                print("Waiting for ALB deletion...")
-                waiter = self.elbv2_client.get_waiter('load_balancers_deleted')
-                waiter.wait(LoadBalancerArns=[alb_arn])
-                print("ALB deleted")
-            
-        except Exception as e:
-            print(f"ALB deletion error (may not exist): {e}")
-
-    def delete_target_groups(self):
-        target_group_names = [
-            f'{self.project_name}-Cluster1-TG',
-            f'{self.project_name}-Cluster2-TG'
-        ]
-        
-        for tg_name in target_group_names:
-            try:
-                tgs = self.elbv2_client.describe_target_groups(
-                    Names=[tg_name]
-                )
-                
-                for tg in tgs['TargetGroups']:
-                    tg_arn = tg['TargetGroupArn']
-                    print(f"Deleting target group: {tg_name}")
-                    self.elbv2_client.delete_target_group(TargetGroupArn=tg_arn)
-                    print(f"Target group {tg_name} deleted")
-                    
-            except Exception as e:
-                print(f"Target group {tg_name} deletion error (may not exist): {e}")
-
     def delete_security_group(self):
         try:
             groups = self.ec2_client.describe_security_groups(
@@ -99,52 +53,3 @@ class AWSTeardown:
                 
         except Exception as e:
             print(f"Security group deletion error (may be in use): {e}")
-
-    def cleanup_files(self):
-        files_to_remove = [
-            'deployment_info.json',
-            'alb_info.json',
-            'benchmark_results.json',
-            'benchmark_results.csv',
-            'cloudwatch_metrics.json'
-        ]
-        
-        for file in files_to_remove:
-            try:
-                if os.path.exists(file):
-                    os.remove(file)
-                    print(f"Removed: {file}")
-            except Exception as e:
-                print(f"Could not remove {file}: {e}")
-
-def main():
-    try:
-        print("Starting AWS Infrastructure Teardown")
-        print("=" * 50)
-        
-        teardown = AWSTeardown(PROJECT_NAME)
-        
-        instance_ids = teardown.find_project_instances()
-        teardown.terminate_instances(instance_ids)
-        
-        teardown.delete_load_balancer()
-        
-        teardown.delete_target_groups()
-        
-        print("Waiting 30 seconds before deleting security group...")
-        time.sleep(30)
-        teardown.delete_security_group()
-        
-        teardown.cleanup_files()
-        
-        print("\n" + "=" * 50)
-        print("TEARDOWN COMPLETED SUCCESSFULLY!")
-        print("All AWS resources have been removed.")
-        print("=" * 50)
-        
-    except Exception as e:
-        print(f"Error during teardown: {e}")
-        raise
-
-if __name__ == "__main__":
-    main()

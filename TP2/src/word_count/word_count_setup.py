@@ -8,8 +8,6 @@ from constants.word_count_constants import UBUNTU_AMI_ID, USER_DATA_SCRIPT_WORDC
 
 def main():
     try:
-        print("Starting AWS Infrastructure Setup to test word count performance")
-        
         manager = setup_aws.AWSManager(WORD_COUNT_PROJECT_NAME)
         
         security_group_id = manager.create_security_group(True)

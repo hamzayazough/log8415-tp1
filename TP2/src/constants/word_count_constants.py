@@ -132,4 +132,5 @@ echo "All experiments completed. Results saved in $RESULT_FILE, comparison_hadoo
 '''
 
 UBUNTU_AMI_ID = "ami-0bbdd8c17ed981ef9"
+
 WORD_COUNT_PROJECT_NAME = "WORDCOUNT-TP2"
