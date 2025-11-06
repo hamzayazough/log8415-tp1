@@ -84,9 +84,10 @@ class AWSManager:
         )
         
         instance_id = response['Instances'][0]['InstanceId']
+        public_ip = response['Instances'][0].get('PublicIpAddress')        
 
         print(f"Launched instance: {instance_id}")
-        return instance_id
+        return (instance_id, public_ip)
     
     def upload_file(self, file_name: str, file_path: str):
         bucket_name = f'{self.project_name}-bucket'

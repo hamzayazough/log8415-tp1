@@ -1,9 +1,184 @@
 MAPPER_USER_DATA_SCRIPT = '''#!/bin/bash
+set -e
+
+cat > mapper.sh <<EOL
+#!/bin/bash
+while true; do
+    if [[ -f ~/friendList.txt ]]; then
+        python3 mapper.py
+        rm ~/friendList.txt
+    fi
+    sleep 5
+done
+EOL
+
+cat > mapper.py <<EOL
+from collections import defaultdict
+import json
+
+Data = dict[str, list[str]]
+MappedData = list[tuple[str, tuple[str, str]]]
+GroupedData = defaultdict[str, list[tuple[str,str]]]
+
+def mapper(data: Data) -> MappedData:
+    mapped: MappedData = []
+
+    for user, friends in data.items():
+        #direct friends generation
+        for f in friends:
+            mapped.append((user, ("DIRECT", f)))
+            mapped.append((f, ("DIRECT", user)))
+
+        #friends-of-friends generation
+        for f in friends:
+            fof_list = [x for x in friends if x != f]
+            if fof_list:
+                mapped.append((f, ("FOF", fof_list)))
+
+    return mapped
+
+
+def shuffle(mapped: MappedData) -> GroupedData:
+    grouped: GroupedData = defaultdict(list)
+    for key, value in mapped:
+        grouped[key].append(value)
+
+    return grouped
+
+def main():
+    try:       
+        data: Data = {}
+
+        with open("friendList.txt", "r") as f:
+            for line in f:
+                line = line.strip()
+                
+                if not line:
+                    print("Line Data Error:", repr(line))
+                    continue
+                
+                parts = line.split()
+                
+                if len(parts) == 1:
+                    user = parts[0]
+                    data[user] = []
+                    continue
+                
+                if len(parts) != 2:
+                    print("Spliting Data Error:", repr(line))
+                    continue
+
+                user, friends_str = parts
+                friends_list = friends_str.split(",")
+
+                data[user] = friends_list                
+           
+        
+        mapped: MappedData = mapper(data)
+        grouped: GroupedData = shuffle(mapped)
+        
+        with open("intermediate.json", "w") as f:
+            json.dump(grouped, f)
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
+
+if __name__ == "__main__":
+    main()
+
+EOL
+
+chmod +x mapper.sh
+nohup ./mapper.sh > /dev/null 2>&1 &
 '''
 
 REDUCER_USER_DATA_SCRIPT = '''#!/bin/bash
+set -e
+
+cat > reducer.sh <<EOL
+#!/bin/bash
+while true; do
+    if [[ -f ~/intermediate.json ]]; then
+        python3 reducer.py
+        rm ~/intermediate.json
+    fi
+    sleep 5
+done
+EOL
+
+cat > reducer.py <<EOL
+from collections import defaultdict
+import json
+
+GroupedData = defaultdict[str, list[tuple[str,str]]]
+ReducedData = dict[str, list[str]]
+
+def reducer(grouped: GroupedData, N=10) -> ReducedData:
+    results: ReducedData = {}
+
+    for user, values in grouped.items():
+        direct: set[str] = set()
+        fof_lists: list[str] = []
+
+        for vtype, value in values:
+            if vtype == "DIRECT":
+                direct.add(value)
+            elif vtype == "FOF":
+                fof_lists.append(value)
+
+        # Count mutual friends
+        mutual_counts: defaultdict[str,int] = defaultdict(int)
+        for fof_group in fof_lists:
+            for candidate in fof_group:
+                if candidate != user and candidate not in direct:
+                    mutual_counts[candidate] += 1
+
+        # Take top N recommendations
+        topN = sorted(mutual_counts.items(), key=lambda x: (-x[1], int(x[0])))[:N]
+
+        results[user] = [uid for uid, _ in topN]
+
+    return results
+
+def main():
+    try:       
+        with open("intermediate.json", "r") as f:
+            grouped: GroupedData = json.load(f)
+        
+        recommendations: ReducedData = reducer(grouped, N=10)
+        
+        with open("recommendations.txt", "w") as f:
+            for user, recs in recommendations.items():
+                recs_str = ",".join([f"{friend}" for friend in recs])
+                f.write(f"{user}\t{recs_str}\n")
+
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
+
+if __name__ == "__main__":
+    main()
+
+EOL
+
+chmod +x reducer.sh
+nohup ./reducer.sh > /dev/null 2>&1 &
+
 '''
 
-PROJECT_NAME = "MapReduce-TP2"
+MAPPER_SENDING_SCRIPT='''
+#!/bin/bash
+while true; do
+    if [[ -f ~/intermediate.json ]]; then
+        scp -i tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ~/intermediate.json ubuntu@HOST_PUBLIC_IP_ADDRESS:~
+        rm ~/intermediate.json
+    fi
+    sleep 5
+done
+'''
 
-DEFAULT_AMI_ID = "ami-0c02fb55956c7d316"
+PROJECT_NAME = "map-reduce-tp2"
+
+DEFAULT_AMI_ID = "ami-0bdd88bd06d16ba03"
