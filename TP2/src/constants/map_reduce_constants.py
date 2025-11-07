@@ -1,18 +1,40 @@
+MAPPER_SENDING_SCRIPT = '''#!/bin/bash
+set -e
+export HEC2=/home/ec2-user
+
+sed -i 's/HOST_PUBLIC_IP_ADDRESS/{ip1}/g' $HEC2/send-to-reducer.sh
+nohup $HEC2/send-to-reducer.sh > /dev/null 2>&1 &
+'''
+
+
 MAPPER_USER_DATA_SCRIPT = '''#!/bin/bash
 set -e
 
-cat > mapper.sh <<EOL
+export HEC2=/home/ec2-user
+
+cat > $HEC2/mapper.sh <<EOL
 #!/bin/bash
 while true; do
-    if [[ -f ~/friendList.txt ]]; then
-        python3 mapper.py
-        rm ~/friendList.txt
+    if [[ -f $HEC2/friendList.txt ]]; then
+        python3 $HEC2/mapper.py
+        rm $HEC2/friendList.txt
     fi
     sleep 5
 done
 EOL
 
-cat > mapper.py <<EOL
+cat > $HEC2/send-to-reducer.sh <<EOL
+#!/bin/bash
+while true; do
+    if [[ -f $HEC2/intermediate.json ]]; then
+        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate.json ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/
+        rm $HEC2/intermediate.json
+    fi
+    sleep 5
+done
+EOL
+
+cat > $HEC2/mapper.py <<EOL
 from collections import defaultdict
 import json
 
@@ -49,7 +71,7 @@ def main():
     try:       
         data: Data = {}
 
-        with open("friendList.txt", "r") as f:
+        with open("$HEC2/friendList.txt", "r") as f:
             for line in f:
                 line = line.strip()
                 
@@ -77,7 +99,7 @@ def main():
         mapped: MappedData = mapper(data)
         grouped: GroupedData = shuffle(mapped)
         
-        with open("intermediate.json", "w") as f:
+        with open("$HEC2/intermediate.json", "w") as f:
             json.dump(grouped, f)
         
     except Exception as e:
@@ -89,25 +111,26 @@ if __name__ == "__main__":
 
 EOL
 
-chmod +x mapper.sh
-nohup ./mapper.sh > /dev/null 2>&1 &
+chmod +x $HEC2/mapper.sh $HEC2/send-to-reducer.sh
+nohup $HEC2/mapper.sh > /dev/null 2>&1 &
 '''
 
 REDUCER_USER_DATA_SCRIPT = '''#!/bin/bash
 set -e
+export HEC2=/home/ec2-user
 
-cat > reducer.sh <<EOL
+cat > $HEC2/reducer.sh <<EOL
 #!/bin/bash
 while true; do
-    if [[ -f ~/intermediate.json ]]; then
-        python3 reducer.py
-        rm ~/intermediate.json
+    if [[ -f $HEC2/intermediate.json ]]; then
+        python3 $HEC2/reducer.py
+        rm $HEC2/intermediate.json
     fi
     sleep 5
 done
 EOL
 
-cat > reducer.py <<EOL
+cat > $HEC2/reducer.py <<EOL
 from collections import defaultdict
 import json
 
@@ -143,15 +166,15 @@ def reducer(grouped: GroupedData, N=10) -> ReducedData:
 
 def main():
     try:       
-        with open("intermediate.json", "r") as f:
+        with open("$HEC2/intermediate.json", "r") as f:
             grouped: GroupedData = json.load(f)
         
         recommendations: ReducedData = reducer(grouped, N=10)
         
-        with open("recommendations.txt", "w") as f:
+        with open("$HEC2/recommendations.txt", "w") as f:
             for user, recs in recommendations.items():
                 recs_str = ",".join([f"{friend}" for friend in recs])
-                f.write(f"{user}\t{recs_str}\n")
+                f.write(f"{user}\\t{recs_str}\\n")
 
         
     except Exception as e:
@@ -163,21 +186,11 @@ if __name__ == "__main__":
 
 EOL
 
-chmod +x reducer.sh
-nohup ./reducer.sh > /dev/null 2>&1 &
+chmod +x $HEC2/reducer.sh
+nohup $HEC2/reducer.sh > /dev/null 2>&1 &
 
 '''
 
-MAPPER_SENDING_SCRIPT='''
-#!/bin/bash
-while true; do
-    if [[ -f ~/intermediate.json ]]; then
-        scp -i tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r ~/intermediate.json ubuntu@HOST_PUBLIC_IP_ADDRESS:~
-        rm ~/intermediate.json
-    fi
-    sleep 5
-done
-'''
 
 PROJECT_NAME = "map-reduce-tp2"
 

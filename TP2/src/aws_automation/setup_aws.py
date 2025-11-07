@@ -4,6 +4,7 @@ class AWSManager:
     def __init__(self, project_name):
         self.ec2_client = boto3.client('ec2')
         self.s3 = boto3.resource('s3')
+        self.new_ec2 = boto3.resource('ec2')
         self.project_name = project_name
         print(f"AWS setup initialized for {self.project_name}")
 
@@ -84,10 +85,7 @@ class AWSManager:
         )
         
         instance_id = response['Instances'][0]['InstanceId']
-        public_ip = response['Instances'][0].get('PublicIpAddress')        
-
-        print(f"Launched instance: {instance_id}")
-        return (instance_id, public_ip)
+        return instance_id
     
     def upload_file(self, file_name: str, file_path: str):
         bucket_name = f'{self.project_name}-bucket'
@@ -99,6 +97,9 @@ class AWSManager:
         except:
             print(f'Upload file {file_name}')
             self.s3.Object(bucket_name, file_name).put(Body=open(file_path, 'rb'))
+    
+    def get_public_ip(self, instance_id):
+        return self.new_ec2.Instance(instance_id).public_ip_address
 
 
     def wait_for_instances(self, instance_ids):
