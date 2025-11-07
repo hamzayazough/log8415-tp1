@@ -3,6 +3,8 @@ import boto3
 class AWSManager:
     def __init__(self, project_name):
         self.ec2_client = boto3.client('ec2')
+        self.s3 = boto3.resource('s3')
+        self.new_ec2 = boto3.resource('ec2')
         self.project_name = project_name
         print(f"AWS setup initialized for {self.project_name}")
 
@@ -63,13 +65,13 @@ class AWSManager:
             print(f"Error creating security group: {e}")
             raise
     
-    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, key_name='key'):
-        print("Launching a t2.large instance")
+    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, key_name='key', instance_type='t2.large'):
+        print(f'Launching a {instance_type}  instance')
         response = self.ec2_client.run_instances(
             ImageId=ami_id,
             MinCount=1,
             MaxCount=1,
-            InstanceType='t2.large',
+            InstanceType=instance_type,
             KeyName=key_name,
             SecurityGroupIds=[security_group_id],
             UserData=user_data,
@@ -83,9 +85,22 @@ class AWSManager:
         )
         
         instance_id = response['Instances'][0]['InstanceId']
-
-        print(f"Launched instance: {instance_id}")
         return instance_id
+    
+    def upload_file(self, file_name: str, file_path: str):
+        bucket_name = f'{self.project_name}-bucket'
+        self.s3.create_bucket(Bucket=bucket_name)
+
+        try:
+            self.s3.Object(bucket_name, file_name).load()
+            print(f'File {file_name} already exists')
+        except:
+            print(f'Upload file {file_name}')
+            self.s3.Object(bucket_name, file_name).put(Body=open(file_path, 'rb'))
+    
+    def get_public_ip(self, instance_id):
+        return self.new_ec2.Instance(instance_id).public_ip_address
+
 
     def wait_for_instances(self, instance_ids):
         print("Waiting for instances to be running...")
