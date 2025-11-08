@@ -1,4 +1,9 @@
 import boto3
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from constants.aws_automatisation_constants import ALLOW_HTTP_FROM_ANYWHERE, ALLOW_APP_PORT_8000_FROM_ANYWHERE, ALLOW_SSH_FROM_ANYWHERE
 
 class AWSManager:
     def __init__(self, project_name):
@@ -6,7 +11,17 @@ class AWSManager:
         self.s3 = boto3.resource('s3')
         self.new_ec2 = boto3.resource('ec2')
         self.project_name = project_name
+        self.bucket_name = f'{self.project_name}-bucket'
+        self._create_bucket()
         print(f"AWS setup initialized for {self.project_name}")
+
+    def _create_bucket(self):
+        try:
+            self.s3.meta.client.head_bucket(Bucket=self.bucket_name)
+            print(f"Using existing bucket: {self.bucket_name}")
+        except:
+            self.s3.create_bucket(Bucket=self.bucket_name)
+            print(f"Created new bucket: {self.bucket_name}")
 
     def get_default_vpc(self):
         vpcs = self.ec2_client.describe_vpcs(
@@ -31,27 +46,13 @@ class AWSManager:
             sg_id = response['GroupId']
             
             ip_permissions = [
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 80,
-                    'ToPort': 80,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                },
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 8000,
-                    'ToPort': 8000,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                }
+                ALLOW_HTTP_FROM_ANYWHERE,
+                ALLOW_APP_PORT_8000_FROM_ANYWHERE
             ]
-
+            
+            ## If we need connection to EC2 via SSH
             if can_ssh:
-                ip_permissions.append({
-                    'IpProtocol': 'tcp',
-                    'FromPort': 22,
-                    'ToPort': 22,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                })
+                ip_permissions.append(ALLOW_SSH_FROM_ANYWHERE)
             
             self.ec2_client.authorize_security_group_ingress(
                 GroupId=sg_id,
@@ -65,7 +66,9 @@ class AWSManager:
             print(f"Error creating security group: {e}")
             raise
     
-    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, key_name='key', instance_type='t2.large'):
+    # ami -> Amazon Machine Image and its purpose is to define the OS and pre-installed software in our new VM
+    # key_name -> The name of the key pair to use for SSH access
+    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, key_name, instance_type='t2.large'):
         print(f'Launching a {instance_type}  instance')
         response = self.ec2_client.run_instances(
             ImageId=ami_id,
@@ -84,19 +87,16 @@ class AWSManager:
             }]
         )
         
-        instance_id = response['Instances'][0]['InstanceId']
-        return instance_id
+        # Returning instance Id
+        return response['Instances'][0]['InstanceId']
     
     def upload_file(self, file_name: str, file_path: str):
-        bucket_name = f'{self.project_name}-bucket'
-        self.s3.create_bucket(Bucket=bucket_name)
-
         try:
-            self.s3.Object(bucket_name, file_name).load()
+            self.s3.Object(self.bucket_name, file_name).load()
             print(f'File {file_name} already exists')
         except:
             print(f'Upload file {file_name}')
-            self.s3.Object(bucket_name, file_name).put(Body=open(file_path, 'rb'))
+            self.s3.Object(self.bucket_name, file_name).put(Body=open(file_path, 'rb'))
     
     def get_public_ip(self, instance_id):
         return self.new_ec2.Instance(instance_id).public_ip_address
