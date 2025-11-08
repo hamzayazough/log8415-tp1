@@ -2,10 +2,11 @@ import boto3
 
 class AWSTeardown:
     def __init__(self, project_name):
-        """Initialize AWS clients"""
         self.ec2_client = boto3.client('ec2')
         self.elbv2_client = boto3.client('elbv2')
+        self.s3 = boto3.resource('s3')
         self.project_name = project_name
+        self.bucket_name = f'{self.project_name}-bucket'
         print(f"AWS Teardown initialized for {self.project_name}")
 
     def find_project_instances(self):
@@ -53,3 +54,16 @@ class AWSTeardown:
                 
         except Exception as e:
             print(f"Security group deletion error (may be in use): {e}")
+
+    def delete_s3_bucket(self):
+        try:
+            bucket = self.s3.Bucket(self.bucket_name)
+            
+            print(f"Deleting all objects in bucket: {self.bucket_name}")
+            bucket.objects.all().delete()
+            print(f"Deleting bucket: {self.bucket_name}")
+            bucket.delete()
+            print("S3 bucket deleted successfully")
+            
+        except Exception as e:
+            print(f"S3 bucket deletion error: {e}")
