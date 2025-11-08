@@ -14,6 +14,9 @@ if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 fi
 
+echo "Deploying MapReduce Infrastructure"
+python3 ./src/map_reduce_aws/map_reduce.py
+
 echo "Deploying Word Count Test Infrastructure"
 python src/word_count/word_count_setup.py
 
