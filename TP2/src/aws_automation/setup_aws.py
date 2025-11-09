@@ -6,16 +6,25 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from constants.aws_automatisation_constants import ALLOW_HTTP_FROM_ANYWHERE, ALLOW_APP_PORT_8000_FROM_ANYWHERE, ALLOW_SSH_FROM_ANYWHERE
 
 class AWSManager:
-    def __init__(self, project_name):
+    def __init__(self, project_name, create_bucket=False):
         self.ec2_client = boto3.client('ec2')
-        self.s3 = boto3.resource('s3')
         self.new_ec2 = boto3.resource('ec2')
         self.project_name = project_name
-        self.bucket_name = f'{self.project_name}-bucket'
-        self._create_bucket()
+        self.s3 = None
+        self.bucket_name = None
+        
+        if create_bucket:
+            self.create_bucket()
+            
         print(f"AWS setup initialized for {self.project_name}")
 
-    def _create_bucket(self):
+    def create_bucket(self):
+        if self.s3 is None:
+            self.s3 = boto3.resource('s3')
+            sts = boto3.client('sts')
+            account_id = sts.get_caller_identity()["Account"]
+            self.bucket_name = f'{self.project_name}-{account_id}-bucket'
+        
         try:
             self.s3.meta.client.head_bucket(Bucket=self.bucket_name)
             print(f"Using existing bucket: {self.bucket_name}")
@@ -91,6 +100,10 @@ class AWSManager:
         return response['Instances'][0]['InstanceId']
     
     def upload_file(self, file_name: str, file_path: str):
+        if self.s3 is None:
+            print("S3 not initialized. Creating bucket...")
+            self.create_bucket()
+            
         try:
             self.s3.Object(self.bucket_name, file_name).load()
             print(f'File {file_name} already exists')

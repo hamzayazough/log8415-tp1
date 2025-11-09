@@ -5,7 +5,9 @@ class AWSTeardown:
         self.ec2_client = boto3.client('ec2')
         self.s3 = boto3.resource('s3')
         self.project_name = project_name
-        self.bucket_name = f'{self.project_name}-bucket'
+        sts = boto3.client('sts')
+        account_id = sts.get_caller_identity()["Account"]
+        self.bucket_name = f'{self.project_name}-{account_id}-bucket'
         print(f"AWS Teardown initialized for {self.project_name}")
 
     def find_project_instances(self):

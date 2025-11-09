@@ -21,7 +21,7 @@ from constants.map_reduce_constants import (
 
 def main():
     try:
-        manager = setup_aws.AWSManager(PROJECT_NAME)
+        manager = setup_aws.AWSManager(PROJECT_NAME, True)
         
         security_group_id = manager.create_security_group(True)
 
