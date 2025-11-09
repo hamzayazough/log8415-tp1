@@ -26,7 +26,7 @@ def main():
 
         instance_id1 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "mapperInstance", MAPPER_USER_DATA_SCRIPT, "tp2", INSTANCE_TYPE)
         instance_id2 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "reducerInstance", REDUCER_USER_DATA_SCRIPT, "tp2", INSTANCE_TYPE)
-        manager.wait_for_instances([instance_id1, instance_id2])
+        manager.wait_for_instances([instance_id1, instance_id2], True)
         ip1 = manager.get_public_ip(instance_id1)
         ip2 = manager.get_public_ip(instance_id2)
 

@@ -1,3 +1,5 @@
+import socket
+import time
 import boto3
 import sys
 import os
@@ -83,8 +85,34 @@ class AWSManager:
     def get_public_ip(self, instance_id):
         return self.new_ec2.Instance(instance_id).public_ip_address
 
-    def wait_for_instances(self, instance_ids):
+    def wait_for_instances(self, instance_ids, wait_for_ssh=False):
         print("Waiting for instances to be running...")
         waiter = self.ec2_client.get_waiter('instance_running')
         waiter.wait(InstanceIds=instance_ids)
         print("All instances are running!")
+        
+        if not wait_for_ssh:
+            return
+        
+        reservations = self.ec2_client.describe_instances(InstanceIds=instance_ids)['Reservations']
+        public_ips = [
+            i['PublicIpAddress']
+            for r in reservations for i in r['Instances']
+            if 'PublicIpAddress' in i
+        ]
+
+        # Wait for SSH availability on each instance
+        for ip in public_ips:
+            print(f"Waiting for SSH on {ip}...")
+            for _ in range(30):  # up to ~150 seconds
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                try:
+                    sock.connect((ip, 22))
+                    sock.close()
+                    print(f"SSH is ready on {ip}!")
+                    break
+                except (socket.timeout, ConnectionRefusedError):
+                    time.sleep(5)
+            else:
+                raise TimeoutError(f"SSH did not become ready on {ip} in time")
