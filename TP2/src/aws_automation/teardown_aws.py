@@ -3,7 +3,6 @@ import boto3
 class AWSTeardown:
     def __init__(self, project_name):
         self.ec2_client = boto3.client('ec2')
-        self.elbv2_client = boto3.client('elbv2')
         self.s3 = boto3.resource('s3')
         self.project_name = project_name
         self.bucket_name = f'{self.project_name}-bucket'
