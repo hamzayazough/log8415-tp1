@@ -1,3 +1,43 @@
+## Documentation:
+# Purpose: EC2 user data script for automated WordCount performance benchmarking
+# Execution: Runs automatically when Ubuntu EC2 instance launches
+# 
+# Complete Workflow:
+# 1. System Setup:
+#    - Updates Ubuntu package manager (apt-get update)
+#    - Installs Java 11 JDK (required for Hadoop/Spark)
+#    - Installs Python3, pip, wget, and analysis libraries (pandas, matplotlib)
+#
+# 2. Big Data Framework Installation:
+#    - Downloads and installs Hadoop 3.4.2 from Apache mirrors
+#    - Downloads and installs Spark 3.5.7 with Hadoop compatibility
+#    - Configures environment variables (JAVA_HOME, HADOOP_HOME, SPARK_HOME, PATH)
+#
+# 3. Test Data Preparation:
+#    - Creates directories for datasets (/home/ubuntu/datasets) and results (/home/ubuntu/results)
+#    - Downloads 9 assignment-required text datasets from provided URLs
+#    - Sets up CSV file for timing results with proper headers
+#
+# 4. Benchmarking Functions:
+#    - run_linux_wc(): Tests native Linux commands (cat | tr | sort | uniq -c)
+#    - run_hadoop_wc(): Tests Hadoop MapReduce using built-in WordCount example
+#    - run_spark_wc(): Tests Spark using built-in Python WordCount example
+#    - Each function runs 3 times per dataset for statistical reliability
+#
+# 5. Automated Execution:
+#    - Processes all 9 datasets with all 3 frameworks
+#    - Records execution times with nanosecond precision
+#    - Saves results to CSV file for analysis
+#
+# 6. Results Analysis & Visualization:
+#    - Calculate average execution times
+#    - Generates comparison charts (Hadoop vs Linux, Hadoop vs Spark)
+#    - Saves PNG charts to results directory
+#
+# Output Files:
+# - /home/ubuntu/results/timings.csv (raw timing data)
+# - /home/ubuntu/results/comparison_hadoop_linux.png (performance chart)
+# - /home/ubuntu/results/comparison_hadoop_spark.png (performance chart)
 USER_DATA_SCRIPT_WORDCOUNT = '''#!/bin/bash
 set -e
 
@@ -131,6 +171,6 @@ EOF
 echo "All experiments completed. Results saved in $RESULT_FILE, comparison_hadoop_linux.png, and comparison_hadoop_spark.png."
 '''
 
-UBUNTU_AMI_ID = "ami-0bbdd8c17ed981ef9"
+UBUNTU_AMI_ID = "ami-0bbdd8c17ed981ef9" # Image containing Ubuntu OS, Python3, AWS CLI tools, apt-get as package manager, ...
 
 WORD_COUNT_PROJECT_NAME = "WORDCOUNT-TP2"

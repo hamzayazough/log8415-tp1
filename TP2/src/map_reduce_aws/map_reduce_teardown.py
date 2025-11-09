@@ -4,10 +4,10 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from aws_automation import teardown_aws
-from constants.word_count_constants import WORD_COUNT_PROJECT_NAME
+from constants.map_reduce_constants import PROJECT_NAME
 
 def main():
-    teardown = teardown_aws.AWSTeardown(WORD_COUNT_PROJECT_NAME)
+    teardown = teardown_aws.AWSTeardown(PROJECT_NAME)
     teardown.teardown_project()
 
 if __name__ == "__main__":

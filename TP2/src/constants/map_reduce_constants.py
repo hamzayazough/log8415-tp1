@@ -1,3 +1,7 @@
+## Documentation:
+# export HEC2 is used to define the home directory of the ec2-user in the instance
+# sed script is used to replace the placeholder HOST_PUBLIC_IP_ADDRESS in the send-to-reducer.sh script with the actual IP address of the reducer instance
+# nohup command is used to run the send-to-reducer.sh script in the background, redirecting its output to /dev/null to avoid cluttering the terminal
 MAPPER_SENDING_SCRIPT = '''#!/bin/bash
 set -e
 export HEC2=/home/ec2-user
@@ -7,6 +11,12 @@ nohup $HEC2/send-to-reducer.sh >> $HEC2/sender.log 2>>$HEC2/sender-error.log &
 '''
 
 
+## Documentation
+# purpose: running automatically when EC2 instance starts
+# What it does:
+# 1. Creates mapper.sh script that continuously checks for friendList.txt file, processes it using mapper.py, and deletes the file after processing
+# 2. Creates send-to-reducer.sh script that continuously checks for intermediate.json file, sends it to the reducer instance using scp, and deletes the file after sending
+# 3. Creates mapper.py script that contains the same mapper logic as the local version, reading friendList.txt, processing it, and writing intermediate.json
 MAPPER_USER_DATA_SCRIPT = '''#!/bin/bash
 set -e
 
@@ -129,7 +139,12 @@ pip install msgpack zstandard
 
 nohup $HEC2/mapper.sh >> $HEC2/mapper.log 2>>$HEC2/mapper-error.log &
 '''
-
+## Documentation
+# purpose: running automatically when EC2 instance starts
+# What it does:
+# 1. Creates reducer.sh script that continuously checks for intermediate.json file, processes it using reducer.py, and deletes the file after processing
+# 2. Creates reducer.py script that contains the same reducer logic as the local version,
+#    reading intermediate.json, processing it, and writing recommendations.txt
 REDUCER_USER_DATA_SCRIPT = '''#!/bin/bash
 set -e
 export HEC2=/home/ec2-user
@@ -219,4 +234,13 @@ nohup $HEC2/reducer.sh >> $HEC2/reducer.log 2>>$HEC2/reducer-error.log &
 
 PROJECT_NAME = "map-reduce-tp2"
 
-DEFAULT_AMI_ID = "ami-0bdd88bd06d16ba03"
+DEFAULT_AMI_ID = "ami-0bdd88bd06d16ba03" # image containing: Amazon Linux 2, Python3, AWS CLI tools, ...
+
+# MapReduce deployment configuration constants
+SSH_KEY_FILE = 'tp2.pem'
+SSH_OPTIONS = ['-o', 'StrictHostKeyChecking=no', '-o', 'UserKnownHostsFile=/dev/null']
+EC2_USER = 'ec2-user'
+EC2_HOME_DIR = '/home/ec2-user'
+INSTANCE_TYPE = 't2.large'
+FRIEND_LIST_FILE = 'friendList.txt'
+SSH_READY_WAIT_TIME = 30  # seconds to wait for SSH daemon to be ready

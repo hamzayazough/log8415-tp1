@@ -1,10 +1,9 @@
+from time import time
 import boto3
 
 class AWSTeardown:
     def __init__(self, project_name):
-        """Initialize AWS clients"""
         self.ec2_client = boto3.client('ec2')
-        self.elbv2_client = boto3.client('elbv2')
         self.project_name = project_name
         print(f"AWS Teardown initialized for {self.project_name}")
 
@@ -53,3 +52,25 @@ class AWSTeardown:
                 
         except Exception as e:
             print(f"Security group deletion error (may be in use): {e}")
+            
+    def teardown_project(self):
+        try:
+            print("Starting AWS Infrastructure Teardown for project:", self.project_name)
+            print("=" * 50)
+            
+            instance_ids = self.find_project_instances()
+            
+            self.terminate_instances(instance_ids)
+            
+            print("Waiting 30 seconds before deleting security group...")
+            time.sleep(30)
+            self.delete_security_group()
+            
+            print("\n" + "=" * 50)
+            print("TEARDOWN COMPLETED SUCCESSFULLY!")
+            print("All AWS resources for project", self.project_name, "have been removed.")
+            print("=" * 50)
+            
+        except Exception as e:
+            print(f"Error during teardown: {e}")
+            raise
