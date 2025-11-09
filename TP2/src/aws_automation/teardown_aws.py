@@ -1,13 +1,10 @@
+from time import time
 import boto3
 
 class AWSTeardown:
     def __init__(self, project_name):
         self.ec2_client = boto3.client('ec2')
-        self.s3 = boto3.resource('s3')
         self.project_name = project_name
-        sts = boto3.client('sts')
-        account_id = sts.get_caller_identity()["Account"]
-        self.bucket_name = f'{self.project_name}-{account_id}-bucket'
         print(f"AWS Teardown initialized for {self.project_name}")
 
     def find_project_instances(self):
@@ -55,16 +52,25 @@ class AWSTeardown:
                 
         except Exception as e:
             print(f"Security group deletion error (may be in use): {e}")
-
-    def delete_s3_bucket(self):
-        try:
-            bucket = self.s3.Bucket(self.bucket_name)
             
-            print(f"Deleting all objects in bucket: {self.bucket_name}")
-            bucket.objects.all().delete()
-            print(f"Deleting bucket: {self.bucket_name}")
-            bucket.delete()
-            print("S3 bucket deleted successfully")
+    def teardown_project(self):
+        try:
+            print("Starting AWS Infrastructure Teardown for project:", self.project_name)
+            print("=" * 50)
+            
+            instance_ids = self.find_project_instances()
+            
+            self.terminate_instances(instance_ids)
+            
+            print("Waiting 30 seconds before deleting security group...")
+            time.sleep(30)
+            self.delete_security_group()
+            
+            print("\n" + "=" * 50)
+            print("TEARDOWN COMPLETED SUCCESSFULLY!")
+            print("All AWS resources for project", self.project_name, "have been removed.")
+            print("=" * 50)
             
         except Exception as e:
-            print(f"S3 bucket deletion error: {e}")
+            print(f"Error during teardown: {e}")
+            raise

@@ -18,10 +18,9 @@ from constants.map_reduce_constants import (
     FRIEND_LIST_FILE,
 )
 
-
 def main():
     try:
-        manager = setup_aws.AWSManager(PROJECT_NAME, True)
+        manager = setup_aws.AWSManager(PROJECT_NAME)
         
         security_group_id = manager.create_security_group(True)
 
