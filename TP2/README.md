@@ -21,18 +21,25 @@ aws configure
 
 Enter your AWS credentials when prompted:
 
--   AWS Access Key ID
--   AWS Secret Access Key
--   Default region: `us-east-1`
--   Default output format: `json`
+- AWS Access Key ID
+- AWS Secret Access Key
+- Default region: `us-east-1`
+- Default output format: `json`
 
 ```bash
 aws configure set aws_session_token <your token here>
 ```
 
-important note: you MUST have a key-pair setup with the key name being "key". The key.pem file MUST be in the same folder as this script.
+### Step 2: Configure SSH Key Pairs
 
-### Step 2: Run Complete Deployment
+**Important Notes:**
+
+- You MUST have a key-pair setup with the key name being "key". The key.pem file MUST be in the same folder as this script.
+- **For MapReduce functionality**: You MUST also have a separate key-pair named "tp2"
+- **Rename your .pem file to tp2.pem** and place it in the root of the project directory
+- The tp2.pem file is crucial for SSH connections between EC2 instances in the MapReduce deployment
+
+### Step 3: Run Complete Deployment
 
 **Windows:**
 

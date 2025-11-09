@@ -1,11 +1,18 @@
+import socket
+import time
 import boto3
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from constants.aws_automatisation_constants import ALLOW_HTTP_FROM_ANYWHERE, ALLOW_APP_PORT_8000_FROM_ANYWHERE, ALLOW_SSH_FROM_ANYWHERE
 
 class AWSManager:
     def __init__(self, project_name):
         self.ec2_client = boto3.client('ec2')
-        self.s3 = boto3.resource('s3')
         self.new_ec2 = boto3.resource('ec2')
         self.project_name = project_name
+            
         print(f"AWS setup initialized for {self.project_name}")
 
     def get_default_vpc(self):
@@ -31,27 +38,13 @@ class AWSManager:
             sg_id = response['GroupId']
             
             ip_permissions = [
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 80,
-                    'ToPort': 80,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                },
-                {
-                    'IpProtocol': 'tcp',
-                    'FromPort': 8000,
-                    'ToPort': 8000,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                }
+                ALLOW_HTTP_FROM_ANYWHERE,
+                ALLOW_APP_PORT_8000_FROM_ANYWHERE
             ]
-
+            
+            ## If we need connection to EC2 via SSH
             if can_ssh:
-                ip_permissions.append({
-                    'IpProtocol': 'tcp',
-                    'FromPort': 22,
-                    'ToPort': 22,
-                    'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-                })
+                ip_permissions.append(ALLOW_SSH_FROM_ANYWHERE)
             
             self.ec2_client.authorize_security_group_ingress(
                 GroupId=sg_id,
@@ -65,7 +58,9 @@ class AWSManager:
             print(f"Error creating security group: {e}")
             raise
     
-    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, key_name='key', instance_type='t2.large'):
+    # ami -> Amazon Machine Image and its purpose is to define the OS and pre-installed software in our new VM
+    # key_name -> The name of the key pair to use for SSH access
+    def launch_instance(self, ami_id, security_group_id, instance_name, user_data, key_name, instance_type='t2.large'):
         print(f'Launching a {instance_type}  instance')
         response = self.ec2_client.run_instances(
             ImageId=ami_id,
@@ -84,26 +79,40 @@ class AWSManager:
             }]
         )
         
-        instance_id = response['Instances'][0]['InstanceId']
-        return instance_id
-    
-    def upload_file(self, file_name: str, file_path: str):
-        bucket_name = f'{self.project_name}-bucket'
-        self.s3.create_bucket(Bucket=bucket_name)
-
-        try:
-            self.s3.Object(bucket_name, file_name).load()
-            print(f'File {file_name} already exists')
-        except:
-            print(f'Upload file {file_name}')
-            self.s3.Object(bucket_name, file_name).put(Body=open(file_path, 'rb'))
+        # Returning instance Id
+        return response['Instances'][0]['InstanceId']
     
     def get_public_ip(self, instance_id):
         return self.new_ec2.Instance(instance_id).public_ip_address
 
-
-    def wait_for_instances(self, instance_ids):
+    def wait_for_instances(self, instance_ids, wait_for_ssh=False):
         print("Waiting for instances to be running...")
         waiter = self.ec2_client.get_waiter('instance_running')
         waiter.wait(InstanceIds=instance_ids)
         print("All instances are running!")
+        
+        if not wait_for_ssh:
+            return
+        
+        reservations = self.ec2_client.describe_instances(InstanceIds=instance_ids)['Reservations']
+        public_ips = [
+            i['PublicIpAddress']
+            for r in reservations for i in r['Instances']
+            if 'PublicIpAddress' in i
+        ]
+
+        # Wait for SSH availability on each instance
+        for ip in public_ips:
+            print(f"Waiting for SSH on {ip}...")
+            for _ in range(30):  # up to ~150 seconds
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                try:
+                    sock.connect((ip, 22))
+                    sock.close()
+                    print(f"SSH is ready on {ip}!")
+                    break
+                except (socket.timeout, ConnectionRefusedError):
+                    time.sleep(5)
+            else:
+                raise TimeoutError(f"SSH did not become ready on {ip} in time")

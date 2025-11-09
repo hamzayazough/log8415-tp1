@@ -24,7 +24,7 @@ def mapper(data: Data) -> MappedData:
 
 
 def shuffle(mapped: MappedData) -> GroupedData:
-    grouped: GroupedData = defaultdict(list)
+    grouped: GroupedData = defaultdict(list)  # we dont want the same key appearing multiple times
     for key, value in mapped:
         grouped[key].append(value)
 
