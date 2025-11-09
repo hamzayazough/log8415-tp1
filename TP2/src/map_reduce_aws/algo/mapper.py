@@ -1,5 +1,6 @@
 from collections import defaultdict
-import json
+import msgpack
+import zstandard as zstd
 
 Data = dict[str, list[str]]
 MappedData = list[tuple[str, tuple[str, str]]]
@@ -62,8 +63,12 @@ def main():
         mapped: MappedData = mapper(data)
         grouped: GroupedData = shuffle(mapped)
         
-        with open("intermediate.json", "w") as f:
-            json.dump(grouped, f)
+        packed = msgpack.packb(grouped)
+        compressed = zstd.ZstdCompressor(level=10).compress(packed)
+
+        # Save to file
+        with open("intermediate.msgpack.zst", "wb") as f:
+            f.write(compressed)
         
     except Exception as e:
         print(f"Error: {e}")

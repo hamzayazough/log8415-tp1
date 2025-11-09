@@ -1,5 +1,7 @@
 from collections import defaultdict
 import json
+import msgpack
+import zstandard as zstd
 
 GroupedData = defaultdict[str, list[tuple[str,str]]]
 ReducedData = dict[str, list[str]]
@@ -33,8 +35,10 @@ def reducer(grouped: GroupedData, N=10) -> ReducedData:
 
 def main():
     try:       
-        with open("intermediate.json", "r") as f:
-            grouped: GroupedData = json.load(f)
+        with open("data.msgpack.zst", "rb") as f:
+            compressed = f.read()
+
+        grouped = msgpack.unpackb(zstd.ZstdDecompressor().decompress(compressed))
         
         recommendations: ReducedData = reducer(grouped, N=10)
         

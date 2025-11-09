@@ -57,10 +57,25 @@ def main():
         print(scp_command_2)
 
         try:
-            subprocess.run(scp_command, check=True)
-            subprocess.run(ssh_command, check=True)
-            subprocess.run(scp_command_2, check=True)
+            output1 = subprocess.run(scp_command, capture_output=True, text=True, check=True)
+            output2 = subprocess.run(ssh_command, capture_output=True, text=True, check=True)
+            output3 = subprocess.run(scp_command_2, capture_output=True, text=True, check=True)
             
+            print("Standard Output 1:")
+            print(output1.stdout)
+            print("Standard Error 1:")
+            print(output1.stderr)
+
+            print("Standard Output 2:")
+            print(output2.stdout)
+            print("Standard Error 2:")
+            print(output2.stderr)
+
+            print("Standard Output 3:")
+            print(output3.stdout)
+            print("Standard Error 3:")
+            print(output3.stderr)
+
             print('File Transfered Successfully')
         except Exception as e:
             print(f'SCP failed: {e}')

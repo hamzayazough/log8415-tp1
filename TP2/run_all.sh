@@ -15,10 +15,10 @@ if [ -f "requirements.txt" ]; then
 fi
 
 echo "Deploying MapReduce Infrastructure"
-python ./src/map_reduce_aws/map_reduce.py
+python src/map_reduce_aws/map_reduce.py
 
 echo "Deploying Word Count Test Infrastructure"
-python ./src/word_count/word_count_setup.py
+python src/word_count/word_count_setup.py
 
 echo "Deployment complete!"
 echo "To check the results of the map reduce experiment, check for recommendations.txt in /home/ec2-user/"
