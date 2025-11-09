@@ -46,6 +46,12 @@ aws configure set aws_session_token <your token here>
 ./run_all.sh
 ```
 
+**Windows**
+
+```bash
+.\run_all.ps1
+```
+
 The script will automatically:
 
 1. run the map reduce experiment

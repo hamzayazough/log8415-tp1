@@ -1,4 +1,4 @@
-from time import time
+import time
 import boto3
 
 class AWSTeardown:
