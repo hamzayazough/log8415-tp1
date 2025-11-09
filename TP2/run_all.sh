@@ -21,7 +21,7 @@ echo "Deploying Word Count Test Infrastructure"
 python src/word_count/word_count_setup.py
 
 echo "Deployment complete!"
-echo "To check the results of the map reduce experiment, check for recommendations.txt in /home/ec2-user/"
+echo "To check the results of the map reduce experiment, check for recommendations.txt and selected_recommendations.txt in /home/ec2-user/"
 echo "Cleanup map reduce experiment: python ./src/map_reduce_aws/map_reduce_teardown.py"
 
 echo "To check the progress of the word count tests, ssh into the instance and use the following command: cat ../../var/log/cloud-init-output.log"

@@ -211,7 +211,14 @@ def main():
             for user, recs in recommendations.items():
                 recs_str = ",".join([f"{friend}" for friend in recs])
                 f.write(f"{user}\\t{recs_str}\\n")
-
+        
+        selected_ids = ["924", "8941", "8942", "9019", "9020", "9021", "9022", "9990", "9992", "9993"]
+        with open("$HEC2/selected_recommendations.txt", "w") as f:
+            for user in selected_ids:
+                recs = recommendations.get(user)
+                if recs:
+                    recs_str = ",".join([f"{friend}" for friend in recs])
+                    f.write(f"{user}\\t{recs_str}\\n")
         
     except Exception as e:
         print(f"Error: {e}")
