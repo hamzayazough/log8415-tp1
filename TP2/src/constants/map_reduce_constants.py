@@ -3,7 +3,7 @@ set -e
 export HEC2=/home/ec2-user
 
 sed -i 's/HOST_PUBLIC_IP_ADDRESS/{ip1}/g' $HEC2/send-to-reducer.sh
-nohup $HEC2/send-to-reducer.sh > /dev/null 2>&1 &
+nohup $HEC2/send-to-reducer.sh >> $HEC2/sender.log 2>>$HEC2/sender-error.log &
 '''
 
 
@@ -16,7 +16,10 @@ cat > $HEC2/mapper.sh <<EOL
 #!/bin/bash
 while true; do
     if [[ -f $HEC2/friendList.txt ]]; then
+        echo "Found FriendList.txt"
+        ls $HEC2/
         python3 $HEC2/mapper.py
+        ls $HEC2/
         rm $HEC2/friendList.txt
     fi
     sleep 5
@@ -26,9 +29,11 @@ EOL
 cat > $HEC2/send-to-reducer.sh <<EOL
 #!/bin/bash
 while true; do
-    if [[ -f $HEC2/intermediate.json ]]; then
-        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate.json ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/
-        rm $HEC2/intermediate.json
+    if [[ -f $HEC2/intermediate.msgpack.zst ]]; then
+        echo "Sending intermediate.msgpack.zst"
+        ls $HEC2/
+        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate.msgpack.zst ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/
+        rm $HEC2/intermediate.msgpack.zst
     fi
     sleep 5
 done
@@ -37,6 +42,8 @@ EOL
 cat > $HEC2/mapper.py <<EOL
 from collections import defaultdict
 import json
+import msgpack
+import zstandard as zstd
 
 Data = dict[str, list[str]]
 MappedData = list[tuple[str, tuple[str, str]]]
@@ -99,8 +106,11 @@ def main():
         mapped: MappedData = mapper(data)
         grouped: GroupedData = shuffle(mapped)
         
-        with open("$HEC2/intermediate.json", "w") as f:
-            json.dump(grouped, f)
+        packed = msgpack.packb(grouped)
+        compressed = zstd.ZstdCompressor(level=10).compress(packed)
+
+        with open("$HEC2/intermediate.msgpack.zst", "wb") as f:
+            f.write(compressed)
         
     except Exception as e:
         print(f"Error: {e}")
@@ -112,7 +122,12 @@ if __name__ == "__main__":
 EOL
 
 chmod +x $HEC2/mapper.sh $HEC2/send-to-reducer.sh
-nohup $HEC2/mapper.sh > /dev/null 2>&1 &
+
+sudo yum install python-pip -y
+pip install msgpack zstandard
+
+
+nohup $HEC2/mapper.sh >> $HEC2/mapper.log 2>>$HEC2/mapper-error.log &
 '''
 
 REDUCER_USER_DATA_SCRIPT = '''#!/bin/bash
@@ -122,9 +137,11 @@ export HEC2=/home/ec2-user
 cat > $HEC2/reducer.sh <<EOL
 #!/bin/bash
 while true; do
-    if [[ -f $HEC2/intermediate.json ]]; then
+    if [[ -f $HEC2/intermediate.msgpack.zst ]]; then
+        echo "Processing intermediate.msgpack.zst"
+        ls $HEC2/
         python3 $HEC2/reducer.py
-        rm $HEC2/intermediate.json
+        rm $HEC2/intermediate.msgpack.zst
     fi
     sleep 5
 done
@@ -133,6 +150,8 @@ EOL
 cat > $HEC2/reducer.py <<EOL
 from collections import defaultdict
 import json
+import msgpack
+import zstandard as zstd
 
 GroupedData = defaultdict[str, list[tuple[str,str]]]
 ReducedData = dict[str, list[str]]
@@ -166,8 +185,10 @@ def reducer(grouped: GroupedData, N=10) -> ReducedData:
 
 def main():
     try:       
-        with open("$HEC2/intermediate.json", "r") as f:
-            grouped: GroupedData = json.load(f)
+        with open("$HEC2/intermediate.msgpack.zst", "rb") as f:
+            compressed = f.read()
+
+        grouped = msgpack.unpackb(zstd.ZstdDecompressor().decompress(compressed))
         
         recommendations: ReducedData = reducer(grouped, N=10)
         
@@ -187,7 +208,11 @@ if __name__ == "__main__":
 EOL
 
 chmod +x $HEC2/reducer.sh
-nohup $HEC2/reducer.sh > /dev/null 2>&1 &
+
+sudo yum install python-pip -y
+pip install msgpack zstandard
+
+nohup $HEC2/reducer.sh >> $HEC2/reducer.log 2>>$HEC2/reducer-error.log &
 
 '''
 

@@ -13,8 +13,8 @@ def main():
         
         security_group_id = manager.create_security_group(True)
 
-        instance_id1 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "mapperInstance", MAPPER_USER_DATA_SCRIPT, "tp2", 't2.micro')
-        instance_id2 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "reducerInstance", REDUCER_USER_DATA_SCRIPT, "tp2", 't2.micro')
+        instance_id1 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "mapperInstance", MAPPER_USER_DATA_SCRIPT, "tp2", 't2.large')
+        instance_id2 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "reducerInstance", REDUCER_USER_DATA_SCRIPT, "tp2", 't2.large')
         manager.wait_for_instances([instance_id1, instance_id2])
         ip1 = manager.get_public_ip(instance_id1)
         ip2 = manager.get_public_ip(instance_id2)
@@ -41,7 +41,7 @@ def main():
             'scp', '-i', 'tp2.pem',
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'UserKnownHostsFile=/dev/null',
-            './src/map_reduce_aws/friendList.txt',
+            'friendList.txt',
             f'ec2-user@{ip1}:/home/ec2-user/'
         ]
         print(scp_command)
@@ -49,10 +49,25 @@ def main():
         print(scp_command_2)
 
         try:
-            subprocess.run(scp_command, check=True)
-            subprocess.run(ssh_command, check=True)
-            subprocess.run(scp_command_2, check=True)
+            output1 = subprocess.run(scp_command, capture_output=True, text=True, check=True)
+            output2 = subprocess.run(ssh_command, capture_output=True, text=True, check=True)
+            output3 = subprocess.run(scp_command_2, capture_output=True, text=True, check=True)
             
+            print("Standard Output 1:")
+            print(output1.stdout)
+            print("Standard Error 1:")
+            print(output1.stderr)
+
+            print("Standard Output 2:")
+            print(output2.stdout)
+            print("Standard Error 2:")
+            print(output2.stderr)
+
+            print("Standard Output 3:")
+            print(output3.stdout)
+            print("Standard Error 3:")
+            print(output3.stderr)
+
             print('File Transfered Successfully')
         except Exception as e:
             print(f'SCP failed: {e}')
