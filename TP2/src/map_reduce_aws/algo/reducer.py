@@ -1,5 +1,4 @@
 from collections import defaultdict
-import json
 import msgpack
 import zstandard as zstd
 
@@ -33,13 +32,26 @@ def reducer(grouped: GroupedData, N=10) -> ReducedData:
 
     return results
 
-def main():
-    try:       
-        with open("data.msgpack.zst", "rb") as f:
-            compressed = f.read()
 
-        grouped = msgpack.unpackb(zstd.ZstdDecompressor().decompress(compressed))
-        
+def merge_dicts(*dicts):
+    merged = defaultdict(list)
+    for d in dicts:
+        for key, values in d.items():
+            merged[key].extend(values)
+    return dict(merged)
+
+def main():
+    try:
+        groups = []
+        INSTANCE_NUMBER = 1
+        for i in range(1, INSTANCE_NUMBER + 1):
+            with open(f"intermediate-{i}.msgpack.zst", "rb") as f:
+                compressed = f.read()
+                grouped = msgpack.unpackb(zstd.ZstdDecompressor().decompress(compressed))
+                groups.append(grouped)
+                
+        grouped = merge_dicts(*groups)
+
         recommendations: ReducedData = reducer(grouped, N=10)
         
         with open("recommendations.txt", "w") as f:

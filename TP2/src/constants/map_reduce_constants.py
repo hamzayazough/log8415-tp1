@@ -26,10 +26,12 @@ cat > $HEC2/mapper.sh <<EOL
 #!/bin/bash
 while true; do
     if [[ -f $HEC2/friendList.txt ]]; then
-        echo "Found FriendList.txt"
-        ls $HEC2/
+        echo "Found friendList.txt | waiting for complete upload"
+        ls -l $HEC2/friendList.txt
+        sleep 10
+        ls -l $HEC2/friendList.txt
         python3 $HEC2/mapper.py
-        ls $HEC2/
+        ls $HEC2/ -la
         rm $HEC2/friendList.txt
     fi
     sleep 5
@@ -39,11 +41,11 @@ EOL
 cat > $HEC2/send-to-reducer.sh <<EOL
 #!/bin/bash
 while true; do
-    if [[ -f $HEC2/intermediate.msgpack.zst ]]; then
-        echo "Sending intermediate.msgpack.zst"
-        ls $HEC2/
-        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate.msgpack.zst ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/
-        rm $HEC2/intermediate.msgpack.zst
+    if [[ -f $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst ]]; then
+        echo "Sending intermediate-INSTANCE_NUMBER.msgpack.zst"
+        ls $HEC2/ -la
+        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/
+        rm $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst
     fi
     sleep 5
 done
@@ -70,18 +72,18 @@ def mapper(data: Data) -> MappedData:
 
         #friends-of-friends generation
         for f in friends:
-            fof_list = [x for x in friends if x != f]
+            fof_list = { x for x in friends if x != f }
             if fof_list:
-                mapped.append((f, ("FOF", fof_list)))
+                mapped.append((f, ("FOF", tuple(fof_list))))
 
     return mapped
 
 
 def shuffle(mapped: MappedData) -> GroupedData:
-    grouped: GroupedData = defaultdict(list)
+    grouped: GroupedData = defaultdict(set)  # we dont want the same key appearing multiple times
     for key, value in mapped:
-        grouped[key].append(value)
-
+        grouped[key].add(value)
+    grouped = { k:list(v) for k, v in grouped.items()}
     return grouped
 
 def main():
@@ -119,7 +121,7 @@ def main():
         packed = msgpack.packb(grouped)
         compressed = zstd.ZstdCompressor(level=10).compress(packed)
 
-        with open("$HEC2/intermediate.msgpack.zst", "wb") as f:
+        with open("$HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst", "wb") as f:
             f.write(compressed)
         
     except Exception as e:
@@ -151,13 +153,27 @@ export HEC2=/home/ec2-user
 
 cat > $HEC2/reducer.sh <<EOL
 #!/bin/bash
+N=INSTANCE_NUMBER
+
 while true; do
-    if [[ -f $HEC2/intermediate.msgpack.zst ]]; then
-        echo "Processing intermediate.msgpack.zst"
-        ls $HEC2/
-        python3 $HEC2/reducer.py
-        rm $HEC2/intermediate.msgpack.zst
+    all_found=true
+    for i in \$(seq 1 \$N); do
+        if [[ ! -f "$HEC2/intermediate-\$i.msgpack.zst" ]]; then
+            all_found=false
+            break
+        fi
+    done
+
+    if [[ "\$all_found" == true ]]; then
+        echo "All \$N intermediate files found — processing..."
+        ls "$HEC2/" -l
+        sleep 20
+        ls "$HEC2/" -la
+        python3 "$HEC2/reducer.py"
+        rm "$HEC2"/intermediate-{1..\$N}.msgpack.zst 2>/dev/null
+        echo "Processing done, waiting for next batch..."
     fi
+
     sleep 5
 done
 EOL
@@ -198,13 +214,25 @@ def reducer(grouped: GroupedData, N=10) -> ReducedData:
 
     return results
 
-def main():
-    try:       
-        with open("$HEC2/intermediate.msgpack.zst", "rb") as f:
-            compressed = f.read()
 
-        grouped = msgpack.unpackb(zstd.ZstdDecompressor().decompress(compressed))
-        
+def merge_dicts(*dicts):
+    merged = defaultdict(list)
+    for d in dicts:
+        for key, values in d.items():
+            merged[key].extend(values)
+    return dict(merged)    
+
+def main():
+    try:
+        groups = []
+        for i in range(1, INSTANCE_NUMBER + 1):
+            with open(f"$HEC2/intermediate-{i}.msgpack.zst", "rb") as f:
+                compressed = f.read()
+                grouped = msgpack.unpackb(zstd.ZstdDecompressor().decompress(compressed))
+                groups.append(grouped)
+                
+        grouped = merge_dicts(*groups)
+
         recommendations: ReducedData = reducer(grouped, N=10)
         
         with open("$HEC2/recommendations.txt", "w") as f:

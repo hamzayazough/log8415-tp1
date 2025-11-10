@@ -18,67 +18,100 @@ from constants.map_reduce_constants import (
     FRIEND_LIST_FILE,
 )
 
+def split_file(input_path, m):
+    with open(input_path, 'r') as f:
+        lines = f.readlines()
+
+    n = len(lines)
+    chunk_size = (n + m - 1) // m
+
+    for i in range(m):
+        start = i * chunk_size
+        end = start + chunk_size
+        chunk = lines[start:end]
+
+        if not chunk:
+            break
+
+        output_path = f"friendList-{i+1}.txt"
+        with open(output_path, 'w') as f_out:
+            f_out.writelines(chunk)
+            f_out.flush()
+
+        print(f"Created {output_path} ({len(chunk)} lines)")
+
+
+
 def main():
     try:
+        INSTANCES = 3
+        split_file(FRIEND_LIST_FILE, INSTANCES)
         manager = setup_aws.AWSManager(PROJECT_NAME)
         
         security_group_id = manager.create_security_group(True)
+        mapper_ids = []
+        for i in range(1, INSTANCES + 1):
+            mapper_user_data_script = MAPPER_USER_DATA_SCRIPT.replace('INSTANCE_NUMBER', str(i))
+            instance_id1 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, f"mapperInstance-{i}", mapper_user_data_script, "tp2", INSTANCE_TYPE)
+            mapper_ids.append((instance_id1, i))
 
-        instance_id1 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "mapperInstance", MAPPER_USER_DATA_SCRIPT, "tp2", INSTANCE_TYPE)
-        instance_id2 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "reducerInstance", REDUCER_USER_DATA_SCRIPT, "tp2", INSTANCE_TYPE)
+        reducer_user_data_script = REDUCER_USER_DATA_SCRIPT.replace('INSTANCE_NUMBER', str(INSTANCES))
+        instance_id2 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "reducerInstance", reducer_user_data_script, "tp2", INSTANCE_TYPE)
         manager.wait_for_instances([instance_id1, instance_id2], True)
-        ip1 = manager.get_public_ip(instance_id1)
         ip2 = manager.get_public_ip(instance_id2)
 
-        scp_command = [
-            'scp', '-i', SSH_KEY_FILE,
-            *SSH_OPTIONS,
-            SSH_KEY_FILE, f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/'
-        ]
-        print(MAPPER_SENDING_SCRIPT)
+        for instance_id, i in mapper_ids:
+            ip1 = manager.get_public_ip(instance_id)
+            scp_command = [
+                'scp', '-i', SSH_KEY_FILE,
+                *SSH_OPTIONS,
+                SSH_KEY_FILE, f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/'
+            ]
+            print(MAPPER_SENDING_SCRIPT)
 
-        mapper_sending_string_formated = MAPPER_SENDING_SCRIPT.format(ip1=ip2)
+            mapper_sending_string_formated = MAPPER_SENDING_SCRIPT.format(ip1=ip2)
 
-        ssh_command = [
-            'ssh', '-i', SSH_KEY_FILE,
-            *SSH_OPTIONS,
-            f'{EC2_USER}@{ip1}',
-            mapper_sending_string_formated
-        ]
+            ssh_command = [
+                'ssh', '-i', SSH_KEY_FILE,
+                *SSH_OPTIONS,
+                f'{EC2_USER}@{ip1}',
+                mapper_sending_string_formated
+            ]
 
-        scp_command_2 = [
-            'scp', '-i', SSH_KEY_FILE,
-            *SSH_OPTIONS,
-            FRIEND_LIST_FILE,
-            f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/'
-        ]
-        print(scp_command)
-        print(ssh_command)
-        print(scp_command_2)
-
-        try:
-            output1 = subprocess.run(scp_command, capture_output=True, text=True, check=True)
-            output2 = subprocess.run(ssh_command, capture_output=True, text=True, check=True)
-            output3 = subprocess.run(scp_command_2, capture_output=True, text=True, check=True)
+            scp_command_2 = [
+                'scp', '-i', SSH_KEY_FILE,
+                *SSH_OPTIONS,
+                f'friendList-{i}.txt',
+                f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/friendList.txt'
+            ]
             
-            print("Standard Output 1:")
-            print(output1.stdout)
-            print("Standard Error 1:")
-            print(output1.stderr)
+            print(' '.join(scp_command))
+            print(' '.join(ssh_command))
+            print(' '.join(scp_command_2))
 
-            print("Standard Output 2:")
-            print(output2.stdout)
-            print("Standard Error 2:")
-            print(output2.stderr)
+            try:
+                output1 = subprocess.run(scp_command, capture_output=True, text=True, check=True)
+                output2 = subprocess.run(ssh_command, capture_output=True, text=True, check=True)
+                output3 = subprocess.run(scp_command_2, capture_output=True, text=True, check=True)
+                
+                print("Standard Output 1:")
+                print(output1.stdout)
+                print("Standard Error 1:")
+                print(output1.stderr)
 
-            print("Standard Output 3:")
-            print(output3.stdout)
-            print("Standard Error 3:")
-            print(output3.stderr)
+                print("Standard Output 2:")
+                print(output2.stdout)
+                print("Standard Error 2:")
+                print(output2.stderr)
 
-            print('File Transfered Successfully')
-        except Exception as e:
-            print(f'SCP failed: {e}')
+                print("Standard Output 3:")
+                print(output3.stdout)
+                print("Standard Error 3:")
+                print(output3.stderr)
+
+                print(f'File Transfered Successfully for instance {instance_id} {i} ')
+            except Exception as e:
+                print(f'SCP failed: {e}')
 
         print("Mapper Reducer instances deployment completed successfully!")
 

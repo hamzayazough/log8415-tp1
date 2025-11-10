@@ -28,9 +28,11 @@ if (Test-Path "requirements.txt") {
 
 Write-Host "Deploying MapReduce Infrastructure"
 python "src/map_reduce_aws/map_reduce.py"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "Deploying Word Count Test Infrastructure"
 python "src/word_count/word_count_setup.py"
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "Deployment complete!"
 Write-Host "To check MapReduce results, check for recommendations.txt and selected_recommendations.txt in your home directory."
