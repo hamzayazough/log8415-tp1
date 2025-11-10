@@ -257,19 +257,6 @@ if __name__ == "__main__":
 
 EOL
 
-cat > $HEC2/results.py <<EOL
-values = []
-with open('$HEC2/recommendations.txt', 'r') as f:
-    l = [924,8941,8942,9019, 9020, 9021, 9022, 9990, 9992, 9993]
-    for line in f.readlines():
-        for n in l:
-            if line.startswith(str(n) + '\\t'):
-                values.append(line)
-sorted_values = sorted(values, key=lambda x : int(x.split('\\t')[0]))
-with open('$HEC2/results.txt', 'w') as f:
-    f.writelines(sorted_values)
-EOL
-
 chmod +x $HEC2/reducer.sh
 
 sudo yum install python-pip -y
