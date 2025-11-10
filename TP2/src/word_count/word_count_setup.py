@@ -11,7 +11,7 @@ def main():
         manager = setup_aws.AWSManager(WORD_COUNT_PROJECT_NAME)
         
         security_group_id = manager.create_security_group(True)
-        instance_id = manager.launch_instance(UBUNTU_AMI_ID, security_group_id, "WordCountTestInstance", USER_DATA_SCRIPT_WORDCOUNT, "vockey")
+        instance_id = manager.launch_instance(UBUNTU_AMI_ID, security_group_id, "WordCountTestInstance", USER_DATA_SCRIPT_WORDCOUNT, "tp2")
         manager.wait_for_instances([instance_id])
 
         print("\nWord Count test instance deployment completed successfully!")

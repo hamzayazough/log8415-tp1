@@ -56,3 +56,21 @@ The script will automatically:
 
 1. run the map reduce experiment
 2. run word count tests
+
+### Step 4: Retrieve results
+
+To retrieve results, we will need to connect to the reducer instance for the MapReduce experiment and to the word count instance for the word count tests.
+
+#### MapReduce
+
+```
+ssh -i "path/to/tp2.pem" ec2-user@PUBLIC_IP_ADDR
+```
+
+#### Word Count
+
+```
+ssh -i "path/to/tp2.pem" ubuntu@PUBLIC_IP_ADDR
+```
+
+Just replace "path/to/tp2.pem" with the actual path to tp2.pem and PUBLIC_IP_ADDR with the public address of the instance you want to connect to.
