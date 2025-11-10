@@ -67,7 +67,6 @@ def main():
                 *SSH_OPTIONS,
                 SSH_KEY_FILE, f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/'
             ]
-            print(MAPPER_SENDING_SCRIPT)
 
             mapper_sending_string_formated = MAPPER_SENDING_SCRIPT.format(ip1=ip2)
 
@@ -82,17 +81,28 @@ def main():
                 'scp', '-i', SSH_KEY_FILE,
                 *SSH_OPTIONS,
                 f'friendList-{i}.txt',
-                f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/friendList.txt'
+                f'{EC2_USER}@{ip1}:{EC2_HOME_DIR}/incomplete.txt'
+            ]
+
+            ssh_command_2 = [
+                'ssh', '-i', SSH_KEY_FILE,
+                *SSH_OPTIONS,
+                f'{EC2_USER}@{ip1}',
+                f'mv {EC2_HOME_DIR}/incomplete.txt {EC2_HOME_DIR}/friendList.txt'
             ]
             
-            print(' '.join(scp_command))
-            print(' '.join(ssh_command))
-            print(' '.join(scp_command_2))
-
             try:
-                output1 = subprocess.run(scp_command, capture_output=True, text=True, check=True)
-                output2 = subprocess.run(ssh_command, capture_output=True, text=True, check=True)
+                print(' '.join(scp_command))
+                output1 = subprocess.run(scp_command, capture_output=True, text=True, check=True)                
+
+                print(' '.join(scp_command_2))
                 output3 = subprocess.run(scp_command_2, capture_output=True, text=True, check=True)
+
+                print(' '.join(ssh_command_2))
+                output4 = subprocess.run(ssh_command_2, capture_output=True, text=True, check=True)
+
+                print(' '.join(ssh_command))
+                output2 = subprocess.run(ssh_command, capture_output=True, text=True, check=True)
                 
                 print("Standard Output 1:")
                 print(output1.stdout)
@@ -108,6 +118,11 @@ def main():
                 print(output3.stdout)
                 print("Standard Error 3:")
                 print(output3.stderr)
+
+                print("Standard Output 4:")
+                print(output4.stdout)
+                print("Standard Error 4:")
+                print(output4.stderr)
 
                 print(f'File Transfered Successfully for instance {instance_id} {i} ')
             except Exception as e:

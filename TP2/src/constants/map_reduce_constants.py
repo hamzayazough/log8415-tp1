@@ -5,6 +5,7 @@
 MAPPER_SENDING_SCRIPT = '''#!/bin/bash
 set -e
 export HEC2=/home/ec2-user
+chmod 400 $HEC2/tp2.pem
 
 sed -i 's/HOST_PUBLIC_IP_ADDRESS/{ip1}/g' $HEC2/send-to-reducer.sh
 nohup $HEC2/send-to-reducer.sh >> $HEC2/sender.log 2>>$HEC2/sender-error.log &
@@ -28,8 +29,6 @@ while true; do
     if [[ -f $HEC2/friendList.txt ]]; then
         echo "Found friendList.txt | waiting for complete upload"
         ls -l $HEC2/friendList.txt
-        sleep 10
-        ls -l $HEC2/friendList.txt
         python3 $HEC2/mapper.py
         ls $HEC2/ -la
         rm $HEC2/friendList.txt
@@ -44,7 +43,8 @@ while true; do
     if [[ -f $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst ]]; then
         echo "Sending intermediate-INSTANCE_NUMBER.msgpack.zst"
         ls $HEC2/ -la
-        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/
+        scp -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst ec2-user@HOST_PUBLIC_IP_ADDRESS:$HEC2/incomplete-INSTANCE_NUMBER.msgpack.zst
+        ssh -i $HEC2/tp2.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@HOST_PUBLIC_IP_ADDRESS "mv $HEC2/incomplete-INSTANCE_NUMBER.msgpack.zst  $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst"
         rm $HEC2/intermediate-INSTANCE_NUMBER.msgpack.zst
     fi
     sleep 5
@@ -166,8 +166,6 @@ while true; do
 
     if [[ "\$all_found" == true ]]; then
         echo "All \$N intermediate files found — processing..."
-        ls "$HEC2/" -l
-        sleep 20
         ls "$HEC2/" -la
         python3 "$HEC2/reducer.py"
         rm "$HEC2"/intermediate-{1..\$N}.msgpack.zst 2>/dev/null
