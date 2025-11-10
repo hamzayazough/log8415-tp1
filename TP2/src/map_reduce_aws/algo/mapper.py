@@ -17,18 +17,18 @@ def mapper(data: Data) -> MappedData:
 
         #friends-of-friends generation
         for f in friends:
-            fof_list = [x for x in friends if x != f]
+            fof_list = { x for x in friends if x != f }
             if fof_list:
-                mapped.append((f, ("FOF", fof_list)))
+                mapped.append((f, ("FOF", tuple(fof_list))))
 
     return mapped
 
 
 def shuffle(mapped: MappedData) -> GroupedData:
-    grouped: GroupedData = defaultdict(list)  # we dont want the same key appearing multiple times
+    grouped: GroupedData = defaultdict(set)  # we dont want the same key appearing multiple times
     for key, value in mapped:
-        grouped[key].append(value)
-
+        grouped[key].add(value)
+    grouped = { k:list(v) for k, v in grouped.items()}
     return grouped
 
 def main():
@@ -66,8 +66,7 @@ def main():
         packed = msgpack.packb(grouped)
         compressed = zstd.ZstdCompressor(level=10).compress(packed)
 
-        # Save to file
-        with open("intermediate.msgpack.zst", "wb") as f:
+        with open("intermediate-INSTANCE_NUMBER.msgpack.zst", "wb") as f:
             f.write(compressed)
         
     except Exception as e:
