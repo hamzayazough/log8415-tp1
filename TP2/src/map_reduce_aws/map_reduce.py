@@ -57,8 +57,10 @@ def main():
 
         reducer_user_data_script = REDUCER_USER_DATA_SCRIPT.replace('INSTANCE_NUMBER', str(INSTANCES))
         instance_id2 = manager.launch_instance(DEFAULT_AMI_ID, security_group_id, "reducerInstance", reducer_user_data_script, "tp2", INSTANCE_TYPE)
-        manager.wait_for_instances([instance_id1, instance_id2], True)
         ip2 = manager.get_public_ip(instance_id2)
+        
+        mapper_instance_ids = [id[0] for id in mapper_ids]
+        manager.wait_for_instances([*mapper_instance_ids, instance_id2], True)
 
         for instance_id, i in mapper_ids:
             ip1 = manager.get_public_ip(instance_id)
